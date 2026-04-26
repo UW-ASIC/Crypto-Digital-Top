@@ -16,8 +16,32 @@ project:
   # List your project's source files here.
   # Source files must be in ./src and you must list each source file separately, one per line.
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
-  source_files:
-    - "project.v"
+source_files:
+  - "project.v"
+  - "SHA.v"
+  - "ack_bus_arbiter.v"
+  - "ack_bus_module_interface.v"
+  - "aes_fsm.v"
+  - "bus_arbiter.v"
+  - "comp_queue.v"
+  - "control_top.v"
+  - "data_bus_ctrl.v"
+  - "data_bus_module_interface.v"
+  - "deserializer.v"
+  - "global_arbiter.v"
+  - "interconnect.v"
+  - "mem_command_port.v"
+  - "mem_spi_controller.v"
+  - "mem_top.v"
+  - "mem_txn_fsm.v"
+  - "message_schedule.v"
+  - "padder.v"
+  - "req_queue.v"
+  - "round.v"
+  - "round_constants.v"
+  - "scoreboard.v"
+  - "serializer.v"
+  - "sha_fsm.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
