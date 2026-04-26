@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2024 Your Name
+ * Copyright (c) 2024 UWASIC
  * SPDX-License-Identifier: Apache-2.0
  */
 
 `default_nettype none
 
-module tt_um_example (
+module tt_um_uwasic_crypto (
     input  wire [7:0] ui_in,    // Dedicated inputs
     output wire [7:0] uo_out,   // Dedicated outputs
     input  wire [7:0] uio_in,   // IOs: Input path
@@ -16,12 +16,203 @@ module tt_um_example (
     input  wire       rst_n     // reset_n - low to reset
 );
 
-  // All output pins must be assigned. If not used, assign to 0.
-  assign uo_out  = ui_in + uio_in;  // Example: ou_out is the sum of ui_in and uio_in
-  assign uio_out = 0;
-  assign uio_oe  = 0;
 
-  // List all unused inputs to prevent warnings
-  wire _unused = &{ena, clk, rst_n, 1'b0};
+//interconnect wire
+// mem
+// mem -> data bus
+wire [7:0] data_mem_bus;
+wire valid_mem_bus;
+wire ready_bus_mem;
 
+// data bus -> mem
+wire [7:0] data_bus_mem;
+wire valid_bus_mem;
+wire ready_mem_bus;
+
+// mem -> ack bus
+wire [1:0] ack_id_mem_bus;
+wire ack_valid_mem_bus;
+wire ack_ready_bus_mem;
+
+// sha
+// sha -> data bus
+wire [7:0] data_sha_bus;
+wire valid_sha_bus;
+wire ready_bus_sha;
+
+// data bus -> sha
+wire [7:0] data_bus_sha;
+wire valid_bus_sha;
+wire ready_sha_bus;
+
+// sha -> ack bus
+wire [1:0] ack_id_sha_bus;
+wire ack_valid_sha_bus;
+wire ack_ready_bus_sha;
+
+// ctrl
+// ctrl -> data bus
+wire [7:0] data_ctrl_bus;
+wire valid_ctrl_bus;
+wire ready_bus_ctrl;
+
+// ctrl -> ack bus
+wire [1:0] ack_id_ctrl_bus;
+wire ack_valid_ctrl_bus;
+wire ack_ready_bus_ctrl;
+
+// ack bus -> ctrl
+wire [2:0] ack_bus_ctrl;
+
+
+interconnect_top u_interconnect_top (
+    .clk(clk),
+    .rst_n(rst_n),
+
+    // mem -> data bus
+    .data_in_mem(data_mem_bus),
+    .valid_in_mem(valid_mem_bus),
+    .ready_out_mem(ready_bus_mem),
+
+    // data bus -> mem
+    .data_out_mem(data_bus_mem),
+    .valid_out_mem(valid_bus_mem),
+    .ready_in_mem(ready_mem_bus),
+
+    // mem -> ack bus
+    .ack_id_in_mem(ack_id_mem_bus),
+    .ack_valid_in_mem(ack_valid_mem_bus),
+    .ack_ready_out_mem(ack_ready_bus_mem),
+
+    // sha -> data bus
+    .data_in_sha(data_sha_bus),
+    .valid_in_sha(valid_sha_bus),
+    .ready_out_sha(ready_bus_sha),
+
+    // data bus -> sha
+    .data_out_sha(data_bus_sha),
+    .valid_out_sha(valid_bus_sha),
+    .ready_in_sha(ready_sha_bus),
+
+    // sha -> ack bus
+    .ack_id_in_sha(ack_id_sha_bus),
+    .ack_valid_in_sha(ack_valid_sha_bus),
+    .ack_ready_out_sha(ack_ready_bus_sha),
+
+    // aes -> data bus
+    .data_in_aes(8'b0),
+    .valid_in_aes(1'b0),
+    .ready_out_aes(),
+
+    // data bus -> aes
+    .data_out_aes(),
+    .valid_out_aes(),
+    .ready_in_aes(1'b0),
+
+    // aes -> ack bus
+    .ack_id_in_aes(2'b10),
+    .ack_valid_in_aes(2'b0),
+    .ack_ready_out_aes(),
+
+    // ctrl -> data bus
+    .data_in_ctrl(data_ctrl_bus),
+    .valid_in_ctrl(valid_ctrl_bus),
+    .ready_out_ctrl(ready_bus_ctrl),
+
+    // ctrl -> ack bus
+    .ack_id_in_ctrl(ack_id_ctrl_bus),
+    .ack_valid_in_ctrl(ack_valid_ctrl_bus),
+    .ack_ready_out_ctrl(ack_ready_bus_ctrl),
+
+    // ack bus -> ctrl
+    .ack_out_ctrl(ack_bus_ctrl)
+);
+// sha
+
+sha u_sha (
+    .clk(clk),
+    .rst_n(rst_n),
+
+    // data bus -> sha
+    .data_in(data_bus_sha),
+    .ready_in(ready_sha_bus),
+    .valid_in(valid_bus_sha),
+
+    // sha -> data bus
+    .data_out(data_sha_bus),
+    .data_ready(ready_bus_sha),
+    .data_valid(valid_sha_bus),
+
+    // sha -> ack bus
+    .ack_ready(ack_ready_bus_sha),
+    .ack_valid(ack_valid_sha_bus),
+    .module_source_id(ack_id_sha_bus),
+
+    // transaction bus
+    .opcode(data_bus_sha[1:0]),
+    .source_id(data_bus_sha[3:2]),
+    .dest_id(data_bus_sha[5:4]),
+    .encdec(data_bus_sha[7]),
+    .addr(24'b0)
+);
+
+mem_top u_mem_top (
+    .clk(clk),
+    .rst_n(rst_n),
+
+    // mem -> data bus
+    .READY(ready_bus_mem),
+    .VALID(valid_mem_bus),
+    .DATA(data_mem_bus),
+
+    // data bus -> mem
+    .READY_IN(ready_mem_bus),
+    .VALID_IN(valid_bus_mem),
+    .DATA_IN(data_bus_mem),
+
+    // mem -> ack bus
+    .ACK_READY(ack_ready_bus_mem),
+    .ACK_VALID(ack_valid_mem_bus),
+    .MODULE_SOURCE_ID(ack_id_mem_bus)
+
+    // IOs
+    .CS(uo_out[2]),
+    .SCLK(uo_out[1]),
+
+    .IN0(uio_in[0]),
+    .IN1(uio_in[1]),
+    .IN2(uio_in[2]),
+    .IN3(uio_in[3]),
+
+    .OUT0(uio_out[0]),
+    .OUT1(uio_out[1]),
+    .OUT2(uio_out[2]),
+    .OUT3(uio_out[3]),
+
+    .uio_oe(uio_oe),
+
+    // test only
+    .err()
+);
+
+// ctrl does not send ack packets into ack bus
+assign ack_id_ctrl_bus    = 2'b00;
+assign ack_valid_ctrl_bus = 1'b0;
+
+control_top u_control_top (
+    .miso(uo_out[0]),
+    .mosi(ui_in[2]),
+    .ena(ena),
+    .spi_clk(ui_in[0]),
+    .cs_n(ui_in[1]),
+
+    .clk(clk),
+    .rst_n(rst_n),
+
+    .ack_in(ack_bus_ctrl),
+    .bus_ready(ready_bus_ctrl),
+
+    .data_bus_out(data_ctrl_bus),
+    .data_bus_valid(valid_ctrl_bus)
+);
 endmodule
