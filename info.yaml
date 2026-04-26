@@ -47,9 +47,9 @@ source_files:
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
 pinout:
   # Inputs
-  ui[0]: ""
-  ui[1]: ""
-  ui[2]: ""
+  ui[0]: "sclk"
+  ui[1]: "n_cs"
+  ui[2]: "mosi"
   ui[3]: ""
   ui[4]: ""
   ui[5]: ""
@@ -57,9 +57,9 @@ pinout:
   ui[7]: ""
 
   # Outputs
-  uo[0]: ""
-  uo[1]: ""
-  uo[2]: ""
+  uo[0]: "miso"
+  uo[1]: "sclk_mem"
+  uo[2]: "n_cs_mem"
   uo[3]: ""
   uo[4]: ""
   uo[5]: ""
@@ -67,10 +67,10 @@ pinout:
   uo[7]: ""
 
   # Bidirectional pins
-  uio[0]: ""
-  uio[1]: ""
-  uio[2]: ""
-  uio[3]: ""
+  uio[0]: "mem_qspi_in_0"
+  uio[1]: "mem_qspi_in_1"
+  uio[2]: "mem_qspi_in_2"
+  uio[3]: "mem_qspi_in_3"
   uio[4]: ""
   uio[5]: ""
   uio[6]: ""
