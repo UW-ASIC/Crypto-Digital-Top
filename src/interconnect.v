@@ -16,10 +16,6 @@ module interconnect_top (
     output wire       valid_out_mem,
     input  wire       ready_in_mem,
 
-    // debug / visible grants to mem DATA_LOCAL
-    output wire       rdy_rd_grant_mem,
-    output wire       dv_rd_grant_mem,
-
     // mem -> ack bus
     input  wire [1:0] ack_id_in_mem,
     input  wire       ack_valid_in_mem,
@@ -36,10 +32,6 @@ module interconnect_top (
     output wire [7:0] data_out_sha,
     output wire       valid_out_sha,
     input  wire       ready_in_sha,
-
-    // debug / visible grants to sha DATA_LOCAL
-    output wire       rdy_rd_grant_sha,
-    output wire       dv_rd_grant_sha,
 
     // sha -> ack bus
     input  wire [1:0] ack_id_in_sha,
@@ -58,9 +50,6 @@ module interconnect_top (
     output wire       valid_out_aes,
     input  wire       ready_in_aes,
 
-    // debug / visible grants to aes DATA_LOCAL
-    output wire       rdy_rd_grant_aes,
-    output wire       dv_rd_grant_aes,
 
     // aes -> ack bus
     input  wire [1:0] ack_id_in_aes,
@@ -75,8 +64,6 @@ module interconnect_top (
     input  wire       valid_in_ctrl,
     output wire       ready_out_ctrl,
 
-    // ctrl only needs ready read grant
-    output wire       rdy_rd_grant_ctrl,
 
     // ctrl -> ack bus
     input  wire [1:0] ack_id_in_ctrl,
@@ -112,14 +99,6 @@ module interconnect_top (
     wire [3:0] rdy_rd_grant;
     wire [3:0] dv_rd_grant;
 
-    assign rdy_rd_grant_mem  = rdy_rd_grant[0];
-    assign rdy_rd_grant_sha  = rdy_rd_grant[1];
-    assign rdy_rd_grant_aes  = rdy_rd_grant[2];
-    assign rdy_rd_grant_ctrl = rdy_rd_grant[3];
-
-    assign dv_rd_grant_mem   = dv_rd_grant[0];
-    assign dv_rd_grant_sha   = dv_rd_grant[1];
-    assign dv_rd_grant_aes   = dv_rd_grant[2];
 
 
     // ctrl does not expose dv_rd_grant_ctrl because ctrl does not read data/valid
