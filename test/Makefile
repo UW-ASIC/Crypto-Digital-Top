@@ -6,7 +6,31 @@ SIM ?= icarus
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = project.v
+PROJECT_SOURCES = project.v \
+	SHA.v \
+	ack_bus_arbiter.v \
+	ack_bus_module_interface.v \
+	aes_fsm.v \
+	bus_arbiter.v \
+	comp_queue.v \
+	control_top.v \
+	data_bus_ctrl.v \
+	data_bus_module_interface.v \
+	deserializer.v \
+	global_arbiter.v \
+	interconnect.v \
+	mem_command_port.v \
+	mem_spi_controller.v \
+	mem_top.v \
+	mem_txn_fsm.v \
+	message_schedule.v \
+	padder.v \
+	req_queue.v \
+	round.v \
+	round_constants.v \
+	scoreboard.v \
+	serializer.v \
+	sha_fsm.v
 
 ifneq ($(GATES),yes)
 
