@@ -173,7 +173,7 @@ mem_top u_mem_top (
     // mem -> ack bus
     .ACK_READY(ack_ready_bus_mem),
     .ACK_VALID(ack_valid_mem_bus),
-    .MODULE_SOURCE_ID(ack_id_mem_bus)
+    .MODULE_SOURCE_ID(ack_id_mem_bus),
 
     // IOs
     .CS(uo_out[2]),
@@ -189,7 +189,7 @@ mem_top u_mem_top (
     .OUT2(uio_out[2]),
     .OUT3(uio_out[3]),
 
-    .uio_oe(uio_oe),
+    .uio_oe(uio_oe[3:0]),
 
     // test only
     .err()
