@@ -11,6 +11,7 @@ PROJECT_SOURCES = project.v \
 	ack_bus_arbiter.v \
 	ack_bus_module_interface.v \
 	aes_fsm.v \
+	aes_top.v \
 	bus_arbiter.v \
 	comp_queue.v \
 	control_top.v \
