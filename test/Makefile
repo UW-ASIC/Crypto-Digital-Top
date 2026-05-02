@@ -33,6 +33,9 @@ PROJECT_SOURCES = project.v \
 	serializer.v \
 	sha_fsm.v
 
+# simulation flag
+COMPILE_ARGS += -DSIMULATION
+
 ifneq ($(GATES),yes)
 
 # RTL simulation:
