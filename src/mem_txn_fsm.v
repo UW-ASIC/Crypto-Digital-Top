@@ -710,50 +710,50 @@ module mem_txn_fsm(
 
     // to make my life easier
     // by gpt
-    reg [255:0] state_name, next_state_name, gap_rts_name, wip_rts_name, wren_rts_name, opa_rts_name;
+    // reg [255:0] state_name, next_state_name, gap_rts_name, wip_rts_name, wren_rts_name, opa_rts_name;
 
-    always @(*) begin
-        case (state)
-            // start up sequence
-            start           : state_name = "start";
-            rst_ena         : state_name = "rst_ena";
-            rst             : state_name = "rst";
-            global_unlock   : state_name = "global_unlock";
-            chip_erase      : state_name = "chip_erase";
-            rd_sr2_send     : state_name = "rd_sr2_send";
-            rd_sr2_send_wait_done : state_name = "rd_sr2_send_wait_done";
-            rd_sr2_rd_wait_done : state_name = "rd_sr2_rd_wait_done";
-            rd_sr2_rd       : state_name = "rd_sr2_rd";
-            wr_sr2_opcode   : state_name = "wr_sr2_opcode";
-            wr_sr2_opcode_wait_done : state_name = "wr_sr2_opcode_wait_done";
-            wr_sr2_data     : state_name = "wr_sr2_data";
-            wr_sr2_data_wait_done: state_name = "wr_sr2_data_wait_done";
-            // normal workflow
-            idle            : state_name = "idle";
-            dummy           : state_name = "dummy";
-            receive_data    : state_name = "receive_data";
-            send_data       : state_name = "send_data";
-            wait_done       : state_name = "wait_done";
+    // always @(*) begin
+    //     case (state)
+    //         // start up sequence
+    //         start           : state_name = "start";
+    //         rst_ena         : state_name = "rst_ena";
+    //         rst             : state_name = "rst";
+    //         global_unlock   : state_name = "global_unlock";
+    //         chip_erase      : state_name = "chip_erase";
+    //         rd_sr2_send     : state_name = "rd_sr2_send";
+    //         rd_sr2_send_wait_done : state_name = "rd_sr2_send_wait_done";
+    //         rd_sr2_rd_wait_done : state_name = "rd_sr2_rd_wait_done";
+    //         rd_sr2_rd       : state_name = "rd_sr2_rd";
+    //         wr_sr2_opcode   : state_name = "wr_sr2_opcode";
+    //         wr_sr2_opcode_wait_done : state_name = "wr_sr2_opcode_wait_done";
+    //         wr_sr2_data     : state_name = "wr_sr2_data";
+    //         wr_sr2_data_wait_done: state_name = "wr_sr2_data_wait_done";
+    //         // normal workflow
+    //         idle            : state_name = "idle";
+    //         dummy           : state_name = "dummy";
+    //         receive_data    : state_name = "receive_data";
+    //         send_data       : state_name = "send_data";
+    //         wait_done       : state_name = "wait_done";
 
-            // shared subroutines / error
-            send_opcode     : state_name = "send_opcode";
-            send_a1         : state_name = "send_a1";
-            send_a2         : state_name = "send_a2";
-            send_a3         : state_name = "send_a3";
-            addr_wait_done  : state_name = "addr_wait_done";
+    //         // shared subroutines / error
+    //         send_opcode     : state_name = "send_opcode";
+    //         send_a1         : state_name = "send_a1";
+    //         send_a2         : state_name = "send_a2";
+    //         send_a3         : state_name = "send_a3";
+    //         addr_wait_done  : state_name = "addr_wait_done";
 
-            gap             : state_name = "gap";
-            spi_wait        : state_name = "spi_wait";
-            wren            : state_name = "wren";
-            wip_poll_send   : state_name = "wip_poll_send";
-            wip_poll_rd     : state_name = "wip_poll_rd";
-            wip_poll_wait   : state_name = "wip_poll_wait";
-            wip_poll_send_wait_done : state_name = "wip_poll_send_wait_done";
-            wip_poll_rd_wait_done : state_name = "wip_poll_rd_wait_done";
-            err             : state_name = "err";
+    //         gap             : state_name = "gap";
+    //         spi_wait        : state_name = "spi_wait";
+    //         wren            : state_name = "wren";
+    //         wip_poll_send   : state_name = "wip_poll_send";
+    //         wip_poll_rd     : state_name = "wip_poll_rd";
+    //         wip_poll_wait   : state_name = "wip_poll_wait";
+    //         wip_poll_send_wait_done : state_name = "wip_poll_send_wait_done";
+    //         wip_poll_rd_wait_done : state_name = "wip_poll_rd_wait_done";
+    //         err             : state_name = "err";
 
-            default         : state_name = "UNKNOWN";
-        endcase
+    //         default         : state_name = "UNKNOWN";
+    //     endcase
 
 
     //     case (next_state)
@@ -961,6 +961,6 @@ module mem_txn_fsm(
     //     default                 : opa_rts_name = "UNKNOWN";
     // endcase
         
-    end
+    // end
 
 endmodule
