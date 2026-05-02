@@ -1,5 +1,6 @@
 import cocotb
 import random
+import Crypto
 from cocotb.clock import Clock
 from cocotb.triggers import (
     RisingEdge,
@@ -81,12 +82,11 @@ TB samples MISO on rising edge
 def get_bit(sig, idx):
     return (int(sig.value) >> idx) & 1
 
-# sha shopuld be default 1 since we taping out sha, no decryption for sha
-def make_opcode(valid, key_addr, text_addr, dest_addr):
+def make_opcode(valid, key_addr, text_addr, dest_addr, encrypt, sha):
     opcode = 0
     opcode |= (valid & 1) << 74
-    opcode |= 1 << 73 #encryp
-    opcode |= 1 << 72 #sha
+    opcode |= (encrypt & 1) << 73 # 0 is encrypt 1 is decrypt
+    opcode |= (sha & 1) << 72 # 1 is sha 0 is aes
     opcode |= (key_addr & 0xFFFFFF) << 48
     opcode |= (text_addr & 0xFFFFFF) << 24
     opcode |= (dest_addr & 0xFFFFFF)
@@ -190,13 +190,12 @@ async def get_mem_output_return_spi(dut, returned):
 
 async def send_cpu_opcode(dut, opcode):
     # idle cs high, sclk low
+    
     dut.ui_in.value = UI_N_CS
     await RisingEdge(dut.clk)
-
     # pull cs low
     dut.ui_in.value = 0
     await RisingEdge(dut.clk)
-
     # send 75 bits, msb first
     for bit_idx in range(74, -1, -1):
         bit = (opcode >> bit_idx) & 1
@@ -255,6 +254,93 @@ async def read_ack_op(dut):
     addr = ack & 0xFFFFFF
 
     return valid, addr
+
+async def qspi_rd_txt(dut,text,length):
+    """read text operation at certain addr"""
+    dut.uio_in.value = 0
+    # wait for mem qspi cs low
+    await wait_bit_low(dut, dut.uo_out, UO_N_CS_MEM)
+    collected = 0x00
+    addr = 0x000000
+    # 8b opc
+    for _ in range(8):
+    # wait for mem qspi sclk rising
+        await wait_bit_rise(dut, dut.uo_out, UO_SCLK_MEM)
+        # read qspi out bit 0
+        bit = 1 if (int(dut.uio_out.value) & UIO_OUT_MEM_QSPI_0) else 0
+        collected = (collected << 1) | bit
+    # 24b addr
+    for _ in range(24):
+        await wait_bit_rise(dut, dut.uo_out, UO_SCLK_MEM)
+        # read qspi out bit 0
+        bit = 1 if (int(dut.uio_out.value) & UIO_OUT_MEM_QSPI_0) else 0
+        addr = (addr << 1) | bit
+    #8 dummy
+    for _ in range(8):
+        # wait for mem qspi sclk rising
+        await wait_bit_rise(dut, dut.uo_out, UO_SCLK_MEM)
+    # each half byte per cycle
+    for i in range(length):
+        cur_byte = (text >> (8*(length - 1 - i))) & 0xff 
+        for j in range(2):
+            # wait for mem qspi sclk fall
+            await wait_bit_fall(dut, dut.uo_out, UO_SCLK_MEM)
+            cur_half = (cur_byte >> (4*(1-j))) & 0xf 
+            dut.uio_in.value = cur_half
+
+    dut.uio_in.value = 0
+
+    return collected,addr
+
+async def qspi_wr_txt(dut,length):
+    """write text operation at certain addr"""
+    # wait for mem qspi cs low
+    await wait_bit_low(dut, dut.uo_out, UO_N_CS_MEM)
+    collected = 0x00
+    addr = 0x000000
+    text = 0x00
+    # 8b opc
+    for _ in range(8):
+    # wait for mem qspi sclk rising
+        await wait_bit_rise(dut, dut.uo_out, UO_SCLK_MEM)
+        # read qspi out bit 0
+        bit = 1 if (int(dut.uio_out.value) & UIO_OUT_MEM_QSPI_0) else 0
+        collected = (collected << 1) | bit
+    # 24b addr
+    for _ in range(24):
+        await wait_bit_rise(dut, dut.uo_out, UO_SCLK_MEM)
+        # read qspi out bit 0
+        bit = 1 if (int(dut.uio_out.value) & UIO_OUT_MEM_QSPI_0) else 0
+        addr = (addr << 1) | bit
+    # each half byte per cycle
+    for i in range(length):
+        cur_byte = 0
+        for j in range(2):
+            # wait for mem qspi sclk fall
+            await wait_bit_rise(dut, dut.uo_out, UO_SCLK_MEM)
+            cur_half = int(dut.uio_out.value) & 0xf
+            cur_byte = (cur_half << (4*(1-j))) | cur_byte
+        text = (text << 8) | cur_byte
+
+    return collected,addr,text
+
+async def sha_flash_model(dut, text):
+    # rd txt
+    rd_opc, rd_addr = await qspi_rd_txt(dut, text, 32)
+
+    # wr txt
+    wr_opc, wr_addr, output_txt = await qspi_wr_txt(dut, 32)
+
+    return rd_opc, rd_addr, wr_opc, wr_addr, output_txt
+
+async def aes_flash_model(dut, text):
+    # rd txt
+    rd_opc, rd_addr = await qspi_rd_txt(dut, text, 32)
+
+    # wr txt
+    wr_opc, wr_addr, output_txt = await qspi_wr_txt(dut, 32)
+
+    return rd_opc, rd_addr, wr_opc, wr_addr, output_txt
 
 @cocotb.test()
 async def reset_test(dut):
@@ -326,10 +412,46 @@ async def reset_test(dut):
     opcode = await get_mem_output_spi(dut,16)
     assert opcode == opcode_qe_sr2, f"Opcode expected {opcode_qe_sr2:#04x} got {opcode:#02x}"
 
-    await RisingEdge(dut.clk)
+    # WIP poll
+    opcode = await get_mem_output_return_spi(dut,0xff)
+    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
+
+    opcode = await get_mem_output_return_spi(dut,0xf0)
+    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
+
+    await ClockCycles(dut.clk,20)
     dut._log.info("Initialization flow done")
 
 # @cocotb.test()
 async def sha_encryption_test(dut):
+    cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())
     dut._log.info("SHA Encryption Start")
+    text_addr = 0xff0000
+    dest_addr = 0xfe0000
+    text = get_random_bytes(32) # get 32 bytes
+    hashed = SHA256.new(text).digest()  # hashed result
+    #conver to int
+    text_int = int.from_bytes(text, "big")
+    hashed_int = int.from_bytes(hashed, "big")
+
+    cpu_opcode = make_opcode(1,0x000000,text_addr,dest_addr,0,1)
+    # flash coroutine
+    flash_task = cocotb.start_soon(sha_flash_model(dut,text_int))
+
+    await send_cpu_opcode(dut,cpu_opcode) # send opcode
     
+    await ClockCycles(dut.clk,5)
+    valid = 0
+    while valid != 1:
+        valid, dest = await read_ack_op(dut)
+        await RisingEdge(dut.clk)
+    rd_opc, rd_addr , wr_opc, wr_addr, output_txt = await flash_task
+
+    assert rd_opc == 0x6B, f"Opcode expected 0x6B got {rd_opc:#02x}"
+    assert wr_opc == 0x32, f"Opcode expected 0x32 got {wr_opc:#02x}"
+    
+    assert rd_addr == text_addr, f"text_addr expected {text_addr:#x} got {rd_addr:#x}"
+    assert wr_addr == dest_addr, f"dest_addr expected {dest_addr:#x} got {wr_addr:#x}"
+        
+    assert output_txt == hashed_int, f"output_txt expected {hashed_int:#x} got {output_txt:#x}"
+    dut._log.info("SHA Encryption Passed")
