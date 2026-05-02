@@ -1,6 +1,5 @@
 import cocotb
 import random
-import Crypto
 from cocotb.clock import Clock
 from cocotb.triggers import (
     RisingEdge,
