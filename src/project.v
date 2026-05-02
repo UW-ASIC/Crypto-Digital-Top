@@ -17,7 +17,7 @@ module tt_um_uwasic_crypto (
 );
 
 
-//interconnect wire
+// interconnect wire
 // mem
 // mem -> data bus
 wire [7:0] data_mem_bus;
@@ -50,6 +50,22 @@ wire [1:0] ack_id_sha_bus;
 wire ack_valid_sha_bus;
 wire ack_ready_bus_sha;
 
+// aes
+// aes -> data bus
+wire [7:0] data_aes_bus;
+wire valid_aes_bus;
+wire ready_bus_aes;
+
+// data bus -> aes
+wire [7:0] data_bus_aes;
+wire valid_bus_aes;
+wire ready_aes_bus;
+
+// aes -> ack bus
+wire [1:0] ack_id_aes_bus;
+wire ack_valid_aes_bus;
+wire ack_ready_bus_aes;
+
 // ctrl
 // ctrl -> data bus
 wire [7:0] data_ctrl_bus;
@@ -63,6 +79,12 @@ wire ack_ready_bus_ctrl;
 
 // ack bus -> ctrl
 wire [2:0] ack_bus_ctrl;
+
+
+// unused top-level output pins
+assign uo_out[7:3]  = 5'b0;
+assign uio_out[7:4] = 4'b0;
+assign uio_oe[7:4]  = 4'b0;
 
 
 interconnect_top u_interconnect_top (
@@ -100,19 +122,19 @@ interconnect_top u_interconnect_top (
     .ack_ready_out_sha(ack_ready_bus_sha),
 
     // aes -> data bus
-    .data_in_aes(8'b0),
-    .valid_in_aes(1'b0),
-    .ready_out_aes(),
+    .data_in_aes(data_aes_bus),
+    .valid_in_aes(valid_aes_bus),
+    .ready_out_aes(ready_bus_aes),
 
     // data bus -> aes
-    .data_out_aes(),
-    .valid_out_aes(),
-    .ready_in_aes(1'b0),
+    .data_out_aes(data_bus_aes),
+    .valid_out_aes(valid_bus_aes),
+    .ready_in_aes(ready_aes_bus),
 
     // aes -> ack bus
-    .ack_id_in_aes(2'b10),
-    .ack_valid_in_aes(2'b0),
-    .ack_ready_out_aes(),
+    .ack_id_in_aes(ack_id_aes_bus),
+    .ack_valid_in_aes(ack_valid_aes_bus),
+    .ack_ready_out_aes(ack_ready_bus_aes),
 
     // ctrl -> data bus
     .data_in_ctrl(data_ctrl_bus),
@@ -127,8 +149,9 @@ interconnect_top u_interconnect_top (
     // ack bus -> ctrl
     .ack_out_ctrl(ack_bus_ctrl)
 );
-// sha
 
+
+// sha
 sha u_sha (
     .clk(clk),
     .rst_n(rst_n),
@@ -156,6 +179,30 @@ sha u_sha (
     .addr(24'b0)
 );
 
+
+// aes
+aes_top u_aes_top (
+    .clk(clk),
+    .rst_n(rst_n),
+
+    // data bus -> aes
+    .data_in(data_bus_aes),
+    .valid_in(valid_bus_aes),
+    .ready_out(ready_aes_bus),
+
+    // aes -> data bus
+    .data_out(data_aes_bus),
+    .valid_out(valid_aes_bus),
+    .ready_in(ready_bus_aes),
+
+    // aes -> ack bus
+    .ack_ready(ack_ready_bus_aes),
+    .ack_valid(ack_valid_aes_bus),
+    .ack_id(ack_id_aes_bus)
+);
+
+
+// mem
 mem_top u_mem_top (
     .clk(clk),
     .rst_n(rst_n),
@@ -189,16 +236,19 @@ mem_top u_mem_top (
     .OUT2(uio_out[2]),
     .OUT3(uio_out[3]),
 
-    .uio_oe(uio_oe),
+    .uio_oe(uio_oe[3:0]),
 
     // test only
     .err()
 );
 
+
 // ctrl does not send ack packets into ack bus
 assign ack_id_ctrl_bus    = 2'b00;
 assign ack_valid_ctrl_bus = 1'b0;
 
+
+// ctrl
 control_top u_control_top (
     .miso(uo_out[0]),
     .mosi(ui_in[2]),
@@ -215,4 +265,7 @@ control_top u_control_top (
     .data_bus_out(data_ctrl_bus),
     .data_bus_valid(valid_ctrl_bus)
 );
+
 endmodule
+
+`default_nettype wire
