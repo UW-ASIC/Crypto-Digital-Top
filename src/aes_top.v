@@ -17,7 +17,7 @@ module aes_top (
     output wire [1:0] ack_id
 );
 
-assign ready_out = 1'b1;
+assign ready_out = 1'b0;
 assign data_out = 8'b0;
 assign valid_out = 1'b0;
 assign ack_valid = 1'b0;

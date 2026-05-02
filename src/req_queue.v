@@ -32,12 +32,12 @@ module req_queue #(
         end
     endfunction
 
-    initial begin
-        integer i;
-        $dumpfile("tb.vcd");
-        for (i = 0; i < QDEPTH; i = i + 1) $dumpvars(0, aesQueue[i]);
-        for (i = 0; i < QDEPTH; i = i + 1) $dumpvars(0, shaQueue[i]);
-    end
+    // initial begin
+    //     integer i;
+    //     $dumpfile("tb.vcd");
+    //     for (i = 0; i < QDEPTH; i = i + 1) $dumpvars(0, aesQueue[i]);
+    //     for (i = 0; i < QDEPTH; i = i + 1) $dumpvars(0, shaQueue[i]);
+    // end
 
     localparam integer SHA_INSTRW = 2 * ADDRW + OPCODEW;
     localparam integer AES_INSTRW = 3 * ADDRW + OPCODEW;
