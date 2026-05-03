@@ -12,6 +12,7 @@ from cocotb.triggers import (
 from cocotb.simtime import get_sim_time
 from Crypto.Hash import SHA256
 from Crypto.Random import get_random_bytes
+from Crypto.Cipher import AES
 
 # =========================
 # Dedicated inputs: ui_in
@@ -287,6 +288,7 @@ async def qspi_rd_txt(dut,text,length):
             await wait_bit_fall(dut, dut.uo_out, UO_SCLK_MEM)
             cur_half = (cur_byte >> (4*(1-j))) & 0xf 
             dut.uio_in.value = cur_half
+            await wait_bit_rise(dut, dut.uo_out, UO_SCLK_MEM)
 
     dut.uio_in.value = 0
 
@@ -335,7 +337,7 @@ async def sha_flash_model(dut, text):
 
 async def aes_flash_model(dut, key, text):
     # rd key
-    rd_key_opc, rd_key_addr = await qspi_rd_txt(dut, text, 32)
+    rd_key_opc, rd_key_addr = await qspi_rd_txt(dut, key, 32)
 
     # rd txt
     rd_txt_opc, rd_txt_addr = await qspi_rd_txt(dut, text, 16)
@@ -458,3 +460,90 @@ async def sha_encryption_test(dut):
         
     assert output_txt == hashed_int, f"output_txt expected {hashed_int:#x} got {output_txt:#x}"
     dut._log.info("SHA Encryption Passed")
+
+# @cocotb.test()
+async def aes_encryption_test(dut):
+    cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())
+    dut._log.info("AES Encryption Start")
+    key_addr = 0xfd0000
+    text_addr = 0xff0000
+    dest_addr = 0xfe0000
+    text = get_random_bytes(16) # get 16 bytes
+    key = get_random_bytes(32) # get 32 bytes
+
+    # AES-256 ECB encrypt one 16-byte block
+    cipher = AES.new(key, AES.MODE_ECB)
+    encrypted = cipher.encrypt(text)
+
+    #conver to int
+    text_int = int.from_bytes(text, "big")
+    key_int = int.from_bytes(key,"big")
+    encrypted_int = int.from_bytes(encrypted, "big")
+    # aes encrypt
+    cpu_opcode = make_opcode(1,key_addr,text_addr,dest_addr,0,0)
+    # flash coroutine
+    flash_task = cocotb.start_soon(aes_flash_model(dut,key_int,text_int))
+
+    await send_cpu_opcode(dut,cpu_opcode) # send opcode
+    
+    await ClockCycles(dut.clk,5)
+    valid = 0
+    while valid != 1:
+        valid, dest = await read_ack_op(dut)
+        await RisingEdge(dut.clk)
+    rd_key_opc, rd_key_addr , rd_txt_opc,rd_txt_addr, wr_opc, wr_addr, output_txt = await flash_task
+
+    assert rd_key_opc == 0x6B, f"Opcode expected 0x6B got {rd_key_opc:#02x}"
+    assert rd_txt_opc == 0x6B, f"Opcode expected 0x6B got {rd_txt_opc:#02x}"
+    assert wr_opc == 0x32, f"Opcode expected 0x32 got {wr_opc:#02x}"
+    
+    assert rd_key_addr == key_addr, f"key_addr expected {key_addr:#x} got {rd_key_addr:#x}"
+    assert rd_txt_addr == text_addr, f"text_addr expected {text_addr:#x} got {rd_txt_addr:#x}"
+    assert wr_addr == dest_addr, f"dest_addr expected {dest_addr:#x} got {wr_addr:#x}"
+        
+    assert output_txt == encrypted_int, f"output_txt expected {encrypted_int:#x} got {output_txt:#x}"
+    dut._log.info("AES Encryption Passed")
+
+
+# @cocotb.test()
+async def aes_decryption_test(dut):
+    cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())
+    dut._log.info("AES Decryption Start")
+    key_addr = 0xfd0000
+    text_addr = 0xff0000
+    dest_addr = 0xfe0000
+    text = get_random_bytes(16) # get 16 bytes
+    key = get_random_bytes(32) # get 32 bytes
+
+    # AES-256 ECB encrypt one 16-byte block
+    cipher = AES.new(key, AES.MODE_ECB)
+    encrypted = cipher.encrypt(text)
+
+    #conver to int
+    text_int = int.from_bytes(text, "big")
+    key_int = int.from_bytes(key,"big")
+    encrypted_int = int.from_bytes(encrypted, "big")
+    # aes decrypt
+    cpu_opcode = make_opcode(1,key_addr,text_addr,dest_addr,1,0)
+    # flash coroutine
+    flash_task = cocotb.start_soon(aes_flash_model(dut,key_int,encrypted_int))
+
+    await send_cpu_opcode(dut,cpu_opcode) # send opcode
+    
+    await ClockCycles(dut.clk,5)
+    valid = 0
+    while valid != 1:
+        valid, dest = await read_ack_op(dut)
+        await RisingEdge(dut.clk)
+    rd_key_opc, rd_key_addr , rd_txt_opc,rd_txt_addr, wr_opc, wr_addr, output_txt = await flash_task
+
+    assert rd_key_opc == 0x6B, f"Opcode expected 0x6B got {rd_key_opc:#02x}"
+    assert rd_txt_opc == 0x6B, f"Opcode expected 0x6B got {rd_txt_opc:#02x}"
+    assert wr_opc == 0x32, f"Opcode expected 0x32 got {wr_opc:#02x}"
+    
+    assert rd_key_addr == key_addr, f"key_addr expected {key_addr:#x} got {rd_key_addr:#x}"
+    assert rd_txt_addr == text_addr, f"text_addr expected {text_addr:#x} got {rd_txt_addr:#x}"
+    assert wr_addr == dest_addr, f"dest_addr expected {dest_addr:#x} got {wr_addr:#x}"
+        
+    assert output_txt == text_int, f"output_txt expected {text_int:#x} got {output_txt:#x}"
+    dut._log.info("AES Decryption Passed")
