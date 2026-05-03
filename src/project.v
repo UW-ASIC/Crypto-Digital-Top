@@ -16,6 +16,15 @@ module tt_um_uwasic_crypto (
     input  wire       rst_n     // reset_n - low to reset
 );
 
+// for debug
+wire sclk = ui_in[0];
+wire cs = ui_in[1];
+wire mosi =  ui_in[2];
+
+initial begin
+    $dumpfile("p.vcd");
+    $dumpvars(0, tt_um_uwasic_crypto);
+end
 
 // interconnect wire
 // mem
