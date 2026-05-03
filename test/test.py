@@ -333,14 +333,17 @@ async def sha_flash_model(dut, text):
 
     return rd_opc, rd_addr, wr_opc, wr_addr, output_txt
 
-# async def aes_flash_model(dut, text):
-#     # rd txt
-#     rd_opc, rd_addr = await qspi_rd_txt(dut, text, 32)
+async def aes_flash_model(dut, key, text):
+    # rd key
+    rd_key_opc, rd_key_addr = await qspi_rd_txt(dut, text, 32)
 
-#     # wr txt
-#     wr_opc, wr_addr, output_txt = await qspi_wr_txt(dut, 32)
+    # rd txt
+    rd_txt_opc, rd_txt_addr = await qspi_rd_txt(dut, text, 16)
 
-#     return rd_opc, rd_addr, wr_opc, wr_addr, output_txt
+    # wr txt
+    wr_opc, wr_addr, output_txt = await qspi_wr_txt(dut, 16)
+
+    return rd_key_opc, rd_key_addr, rd_txt_opc, rd_txt_addr, wr_opc, wr_addr, output_txt
 
 @cocotb.test()
 async def reset_test(dut):
