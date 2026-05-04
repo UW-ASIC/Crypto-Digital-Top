@@ -299,7 +299,7 @@ module interconnect_top (
     // unused ack source id wires
     wire _unused_ack_ids;
     assign _unused_ack_ids = ^{ ack_id_from_mem_local, ack_id_from_sha_local, ack_id_from_aes_local, 
-    ack_id_from_ctrl_local, data_to_ctrl_local[8:0], data_from_ctrl[9]
+    ack_id_from_ctrl_local, data_to_ctrl_local[8:0]
     };
 
 endmodule

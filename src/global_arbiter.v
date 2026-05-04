@@ -136,4 +136,6 @@ module global_arbiter (
         .winner_source_id    (winner_source_id)
     );
 
+    // unused 
+    wire _unused = &{data_from_ctrl[9]}
 endmodule
