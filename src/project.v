@@ -183,7 +183,7 @@ sha u_sha (
 
 
 // aes
-AES u_aes_top (
+aes u_aes_top (
     .clk(clk),
     .rst_n(rst_n),
 
