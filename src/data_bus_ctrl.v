@@ -256,4 +256,6 @@ module data_bus_ctrl (
             endcase
         end
     endfunction
+    // unused 
+    wire _unused = &{1'b0,data_on_bus};
 endmodule

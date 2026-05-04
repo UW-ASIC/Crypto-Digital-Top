@@ -46,7 +46,7 @@ module mem_spi_controller (
     localparam DIVIDER = 3; //divider == 1 means half frequency, divider == 2 means quarter frequency 
     localparam T_SETUP_HOLD_CYC = 1; // setup/hold time cycle constant
 
-    reg n_out_done = 1'b0;
+    reg n_out_done;
 
     reg       n_out_rx_valid;
     reg [7:0] n_out_rx_data;
