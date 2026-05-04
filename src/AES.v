@@ -6,6 +6,7 @@ module aes (
     input  wire [7:0] data_in,
     output wire       ready_in,
     input  wire       valid_in,
+    
     output wire [7:0] data_out,
     input  wire       data_ready,
     output wire       data_valid,

@@ -194,8 +194,8 @@ aes u_aes_top (
 
     // aes -> data bus
     .data_out(data_aes_bus),
-    .valid_out(valid_aes_bus),
-    .ready_in(ready_bus_aes),
+    .data_valid(valid_aes_bus),
+    .data_ready(ready_bus_aes),
 
     // aes -> ack bus
     .ack_ready(ack_ready_bus_aes),
