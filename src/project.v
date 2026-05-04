@@ -178,7 +178,7 @@ sha u_sha (
     // sha -> ack bus
     .ack_ready(ack_ready_bus_sha),
     .ack_valid(ack_valid_sha_bus),
-    .module_source_id(ack_id_sha_bus),
+    .module_source_id(ack_id_sha_bus)
 );
 
 
