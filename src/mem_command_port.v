@@ -111,10 +111,10 @@ module mem_command_port(
                     if(out_bus_ready &&  in_bus_valid && (opcode != OTHER)) begin
                         case(opcode)
                             RD_KEY, RD_TEXT: begin
-                                if(dest_id == MEM_ID) state <= PASS_CMD;
+                                if(src_id == MEM_ID) state <= PASS_CMD;
                             end
                             WR_RES: begin
-                                if(src_id == MEM_ID) state <= PASS_CMD;
+                                if(dest_id == MEM_ID) state <= PASS_CMD;
                             end
                         default: state <= IDLE;
                         endcase

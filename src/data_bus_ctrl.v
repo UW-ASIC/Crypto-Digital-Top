@@ -35,7 +35,7 @@ module data_bus_ctrl (
     localparam [3:0] aes_1b  = (4'b0001 << aes_id);
     localparam [3:0] ctrl_1b = (4'b0001 << ctrl_id);
     // default control ? after opcode byte handshaked goes to tansmission, back when ack bus handshake
-    localparam [1:0] idle = 2'd0, hash_op_wait_ready = 2'd1, addr = 2'd2, module_transmission = 2'd3;
+    localparam [1:0] idle = 2'd0, op_wait_ready = 2'd1, addr = 2'd2, module_transmission = 2'd3;
 
     // mux sel
     reg [1:0] n_data_sel;
@@ -83,9 +83,9 @@ module data_bus_ctrl (
             state <= 0;
             counter <= 0;
 
-            data_sel <= 0;
-            rdy_rd_grant <= 0;
-            dv_rd_grant <= 0;
+            data_sel <= ctrl_id;
+            rdy_rd_grant <= ctrl_1b;
+            dv_rd_grant <= ctrl_1b;
 
             dest_latch <= 0;
             src_latch <= 0;
@@ -119,6 +119,7 @@ module data_bus_ctrl (
         n_dest_latch = dest_latch;
         n_src_latch = src_latch;
 
+        rdy_to_owner = 0;
         // n_rdy_to_owner = rdy_to_owner;
 
         case (state)
@@ -143,14 +144,14 @@ module data_bus_ctrl (
 
                         n_dest_latch = dest;  // remember AES or SHA
                         rdy_to_owner = 0; //stall for 1 cycle 
-                        n_state = hash_op_wait_ready;
+                        n_state = op_wait_ready;
                     end else if(rd_key_fire || rd_txt_fire || wr_txt_fire) begin
                         // handshake
-                        rdy_to_owner = src_rdy & dest_rdy;
-                        n_state = (src_rdy & dest_rdy) ? addr : idle;
+                        rdy_to_owner = 0;
+                        n_state = op_wait_ready;
                         // let source module see opcode, if not mem only 1byte for handshake
-                        n_src_latch = (src_rdy & dest_rdy) ? src : 0;
-                        n_dest_latch = (src_rdy & dest_rdy) ? dest : 0;
+                        n_src_latch = src;
+                        n_dest_latch = dest;
                         // set src
                         n_dv_rd_grant = set(n_dv_rd_grant, src);
                         n_dv_rd_grant = set(n_dv_rd_grant, dest);
@@ -161,14 +162,29 @@ module data_bus_ctrl (
                 end                
             end 
             // when the opcode is xx xx xx 11 hashing operation, wait for fire (ideally 1 cycle but could more than that if sha/aes is not ready)
-            hash_op_wait_ready: begin
-                rdy_to_owner = dest_rdy; //should never be 0 otherwise control is cooked
-                if (valid_on_bus && dest_rdy) begin
-                    n_state = idle;
-                    n_rdy_rd_grant = ctrl_1b;
-                    n_dv_rd_grant  = ctrl_1b;
+            op_wait_ready: begin
+                n_data_sel = ctrl_id;
+                n_rdy_rd_grant = ctrl_1b;
 
-                    n_dest_latch = 0; //reset latch
+                if (opcode == 2'b11) begin
+                    // hash case: only dest needs to see opcode
+                    rdy_to_owner = dest_rdy;
+
+                    if (valid_on_bus && dest_rdy) begin
+                        n_state = idle;
+                        n_dv_rd_grant = ctrl_1b;
+                        n_rdy_rd_grant = ctrl_1b;
+                        n_dest_latch = 0;
+                        n_src_latch = 0;
+                    end
+                end else begin
+                    // normal rd/wr case: src and dest both need to see opcode
+                    rdy_to_owner = src_rdy & dest_rdy;
+
+                    if (valid_on_bus && src_rdy && dest_rdy) begin
+                        // opcode was accepted safely
+                        n_state = addr;
+                    end
                 end
             end
             // when src/dest contains mem, count 3 handshake update ownership
@@ -198,7 +214,7 @@ module data_bus_ctrl (
 
                 if (ack_bus_fire) begin
                     n_data_sel = ctrl_id;
-                    rdy_to_owner = 1;
+                    rdy_to_owner = 0;
                     n_dv_rd_grant = clr(n_dv_rd_grant, dest_latch);
                     n_state = idle;
                     n_src_latch = 0;
