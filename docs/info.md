@@ -9,7 +9,7 @@ You can also include images in this folder and reference them in the markdown. E
 
 ## How it works
 
-It does some sha encryption
+It does some aes encryption/decryption
 
 ## How to test
 

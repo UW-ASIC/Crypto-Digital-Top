@@ -7,11 +7,15 @@ FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
 PROJECT_SOURCES = project.v \
-	SHA.v \
+	AES.v \
+	aes_core_rs.v \
+	sub_bytes.v \
+	sbox.v \
+	roundkey_gen.v \
+	mix_columns.v \
 	ack_bus_arbiter.v \
 	ack_bus_module_interface.v \
 	aes_fsm.v \
-	aes_top.v \
 	bus_arbiter.v \
 	comp_queue.v \
 	control_top.v \
@@ -24,13 +28,10 @@ PROJECT_SOURCES = project.v \
 	mem_spi_controller.v \
 	mem_top.v \
 	mem_txn_fsm.v \
-	message_schedule.v \
-	padder.v \
 	req_queue.v \
-	round.v \
-	round_constants.v \
 	scoreboard.v \
 	serializer.v \
+	sha_top.v \
 	sha_fsm.v
 
 # simulation flag

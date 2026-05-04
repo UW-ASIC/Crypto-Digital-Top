@@ -3,7 +3,7 @@ project:
   title:        "UWASIC Crypto"      # Project title
   author:       "Leo Qi"      # Your name
   discord:      "leozqi"      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  "sha encryption accelerator"      # One line description of what your project does
+  description:  "crypto accelerator"      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
   clock_hz:     50000000       # Clock frequency in Hz (or 0 if not applicable)
 
@@ -18,7 +18,6 @@ project:
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
     - "project.v"
-    - "SHA.v"
     - "ack_bus_arbiter.v"
     - "ack_bus_module_interface.v"
     - "aes_fsm.v"
@@ -34,15 +33,16 @@ project:
     - "mem_spi_controller.v"
     - "mem_top.v"
     - "mem_txn_fsm.v"
-    - "message_schedule.v"
-    - "padder.v"
     - "req_queue.v"
-    - "round.v"
-    - "round_constants.v"
     - "scoreboard.v"
     - "serializer.v"
     - "sha_fsm.v"
-    - "aes_top.v"
+    - "mix_columns.v"
+    - "aes_core_rs.v"
+    - "AES.v"
+    - "roundkey_gen.v"
+    - "sbox.v"
+    - "sub_bytes.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).

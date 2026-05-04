@@ -179,18 +179,11 @@ sha u_sha (
     .ack_ready(ack_ready_bus_sha),
     .ack_valid(ack_valid_sha_bus),
     .module_source_id(ack_id_sha_bus),
-
-    // transaction bus
-    .opcode(data_bus_sha[1:0]),
-    .source_id(data_bus_sha[3:2]),
-    .dest_id(data_bus_sha[5:4]),
-    .encdec(data_bus_sha[7]),
-    .addr(24'b0)
 );
 
 
 // aes
-aes_top u_aes_top (
+AES u_aes_top (
     .clk(clk),
     .rst_n(rst_n),
 

@@ -54,13 +54,13 @@ module mem_command_port(
     localparam TRY_ACK = 4'h4;
     localparam ACK_RECEIVED = 4'h5;
 
-    reg [1:0] fsm_opcode = 0;
+    reg [1:0] fsm_opcode;
 
-    reg [3:0] state = 0;
-    reg [7:0] counter = 0;
+    reg [3:0] state;
+    reg [7:0] counter;
 
-    reg fsm_done_latch = 0; // in fsm done latch and only clear in idle and reset
-    reg [7:0] internal_opcode = 0; // reg to hold internal opcode
+    reg fsm_done_latch; // in fsm done latch and only clear in idle and reset
+    reg [7:0] internal_opcode; // reg to hold internal opcode
     // wire enc_dec = in_bus_data[7];
     // wire [1:0] dest_id = in_bus_data[5:4];
     // wire [1:0] src_id = in_bus_data[3:2];

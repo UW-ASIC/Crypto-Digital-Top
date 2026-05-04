@@ -56,8 +56,8 @@ module mem_spi_controller (
     reg       n_out_cs_n;
     reg [3:0] n_io_ena;
 
-    reg [3:0] bit_count = 4'b0, n_bit_count = 4'b0;
-    reg [1:0] sclk_cnt = 2'b0,n_sclk_cnt = 2'b0;
+    reg [3:0] bit_count, n_bit_count;
+    reg [1:0] sclk_cnt,n_sclk_cnt;
 
     wire sclk_toggle = (sclk_cnt == DIVIDER -1); //pulse when sclk toggle
     wire sclk_fall = sclk_toggle && (out_sclk == 1'b1); // f edge detection
@@ -66,18 +66,18 @@ module mem_spi_controller (
     wire [3:0] num_cycles;
     assign num_cycles = internal_quad ? 4'b0010 : 4'b1000; //2 cycles if quad enable, 8 cycles if quad enable
 
-    reg [1:0] t_cnt  = 2'b0, n_t_cnt = 2'b0; // setup/hold time count
+    reg [1:0] t_cnt, n_t_cnt; // setup/hold time count
 
     reg t_met, n_t_met;
 
     reg internal_rw, n_internal_rw; // latched r_w for this byte
     wire internal_quad = quad_enable && qed; // latched quad_enable for this byte
-    reg [7:0] tx_shift = 8'd0, n_tx_shift = 8'd0; // byte to shift out in write mode
+    reg [7:0] tx_shift, n_tx_shift; // byte to shift out in write mode
     reg have_tx_byte, n_have_tx_byte; // tx_shift is loaded
-    reg [7:0] rx_shift  = 8'd0, n_rx_shift  = 8'd0; // rx shift reg
+    reg [7:0] rx_shift, n_rx_shift; // rx shift reg
     reg rx_full, n_rx_full; // rx shift is full
 
-    reg active = 1'b0, n_active; // 1 = CS low, transaction in progress
+    reg active, n_active; // 1 = CS low, transaction in progress
 
     assign out_tx_ready = ~have_tx_byte; // comb drive tx ready
 

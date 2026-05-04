@@ -124,34 +124,34 @@ module mem_txn_fsm(
     localparam [1:0] RD_KEY = 2'b00, RD_TEXT = 2'b01, WR_RES = 2'b10, INVALID = 2'b11;
 
     // current state
-    reg [5:0] state = 6'd0 ,next_state = 6'd0;
+    reg [5:0] state,next_state;
     // state to return to from wren
-    reg [5:0] wren_return_state = 6'd0, n_wren_return_state = 6'd0;
+    reg [5:0] wren_return_state, n_wren_return_state;
     // state to return to from spi- wait- gap
-    reg [5:0] gap_return_state = 6'd0, n_gap_return_state = 6'd0;    
+    reg [5:0] gap_return_state, n_gap_return_state;    
     // state to return to from wip
-    reg [5:0] wip_return_state = 6'd0, n_wip_return_state = 6'd0;  
+    reg [5:0] wip_return_state, n_wip_return_state;  
     // state to return to after opcode + 3 address bytes
     reg [5:0] opaddr_return_state, n_opaddr_return_state;
 
 
     // counter
-    reg [26:0] counter = 27'd0, n_counter = 27'd0;
-    reg [7:0] timeout_counts = 8'd0, n_timeout_counts = 8'd0;
-    reg [5:0] total_bytes_left = 6'd0, n_total_bytes_left = 6'd0; // count down to 0 
+    reg [26:0] counter, n_counter;
+    reg [7:0] timeout_counts, n_timeout_counts;
+    reg [5:0] total_bytes_left, n_total_bytes_left; // count down to 0 
 
     // cmd latched
-    reg [7:0] opcode_q = 8'd0, n_opcode_q = 8'd0;
-    reg [23:0] addr_q = 24'd0, n_addr_q = 24'd0;
+    reg [7:0] opcode_q, n_opcode_q;
+    reg [23:0] addr_q, n_addr_q;
     // data reg
-    reg[7:0] data = 8'd0, n_data = 8'd0;
+    reg[7:0] data, n_data;
     // next for registered output
-    reg[7:0] n_out_spi_data = 8'd0,n_out_cu_data = 8'd0;
-    reg n_out_spi_valid = 1'd0,n_out_cu_valid = 1'd0;
+    reg[7:0] n_out_spi_data,n_out_cu_data;
+    reg n_out_spi_valid,n_out_cu_valid;
     // keep track type of poll
-    reg [2:0] wip_poll_type = 3'd0, n_wip_poll_type = 3'd0;
+    reg [2:0] wip_poll_type, n_wip_poll_type;
     
-    reg n_err_flag = 1'b0, n_qed = 1'b0;
+    reg n_err_flag, n_qed;
 
     // to be changed for back pressure
     // cu to fsm only high when idle or send data when spi is ready or the buffer is empty
