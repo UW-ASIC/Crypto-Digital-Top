@@ -200,7 +200,7 @@ aes u_aes_top (
     // aes -> ack bus
     .ack_ready(ack_ready_bus_aes),
     .ack_valid(ack_valid_aes_bus),
-    .ack_id(ack_id_aes_bus)
+    .module_source_id(ack_id_aes_bus)
 );
 
 
