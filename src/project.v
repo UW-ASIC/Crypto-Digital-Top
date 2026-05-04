@@ -190,7 +190,7 @@ aes u_aes_top (
     // data bus -> aes
     .data_in(data_bus_aes),
     .valid_in(valid_bus_aes),
-    .ready_out(ready_aes_bus),
+    .ready_in(ready_aes_bus),
 
     // aes -> data bus
     .data_out(data_aes_bus),
