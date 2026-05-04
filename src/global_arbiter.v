@@ -137,5 +137,5 @@ module global_arbiter (
     );
 
     // unused 
-    wire _unused = &{data_from_ctrl[9]}
+    wire _unused = &{data_from_ctrl[9]};
 endmodule
