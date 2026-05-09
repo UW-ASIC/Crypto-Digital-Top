@@ -10,7 +10,7 @@ module global_arbiter (
     //   [8]   valid
     //   [7:0] data
     input wire [9:0] data_from_mem,
-    input wire [9:0] data_from_sha,
+    // input wire [9:0] data_from_sha,
     input wire [9:0] data_from_aes,
     input wire [9:0] data_from_ctrl,
 
@@ -28,13 +28,13 @@ module global_arbiter (
 
     // ack local interfaces -> global arbiter
     input wire ack_valid_from_mem,
-    input wire ack_valid_from_sha,
+    // input wire ack_valid_from_sha,
     input wire ack_valid_from_aes,
     input wire ack_valid_from_ctrl,
 
     // global arbiter -> ack local interfaces
     output wire ack_ready_to_mem,
-    output wire ack_ready_to_sha,
+    // output wire ack_ready_to_sha,
     output wire ack_ready_to_aes,
     output wire ack_ready_to_ctrl,  
     // ack bus exposed to ctrl
@@ -49,7 +49,7 @@ module global_arbiter (
     //   ctrl = 11 -> bit 3
 
     localparam [1:0] MEM_ID  = 2'b00;
-    localparam [1:0] SHA_ID  = 2'b01;
+    // localparam [1:0] SHA_ID  = 2'b01;
     localparam [1:0] AES_ID  = 2'b10;
     localparam [1:0] CTRL_ID = 2'b11;
 
@@ -61,11 +61,13 @@ module global_arbiter (
     wire [1:0] data_sel;
 
     // data_sel chooses who is currently driving the shared data bus
-    assign data_on_bus = (data_sel == MEM_ID) ? data_from_mem[7:0] : (data_sel == SHA_ID) ? data_from_sha[7:0]  :
-    (data_sel == AES_ID) ? data_from_aes[7:0] : (data_sel == CTRL_ID) ? data_from_ctrl[7:0] : 8'h00;
+    // assign data_on_bus = (data_sel == MEM_ID) ? data_from_mem[7:0] : (data_sel == SHA_ID) ? data_from_sha[7:0]  :
+    assign data_on_bus = (data_sel == MEM_ID) ? data_from_mem[7:0] :
+        (data_sel == AES_ID) ? data_from_aes[7:0] : (data_sel == CTRL_ID) ? data_from_ctrl[7:0] : 8'h00;
 
-    assign valid_on_bus = (data_sel == MEM_ID) ? data_from_mem[8] : (data_sel == SHA_ID) ? data_from_sha[8] :
-    (data_sel == AES_ID) ? data_from_aes[8] : (data_sel == CTRL_ID) ? data_from_ctrl[8] : 1'b0;
+    // assign valid_on_bus = (data_sel == MEM_ID) ? data_from_mem[8] : (data_sel == SHA_ID) ? data_from_sha[8] :
+    assign valid_on_bus = (data_sel == MEM_ID) ? data_from_mem[8] :
+        (data_sel == AES_ID) ? data_from_aes[8] : (data_sel == CTRL_ID) ? data_from_ctrl[8] : 1'b0;
 
     // broadcast shared data bus back to all DATA_LOCAL interfaces
     assign data_to_locals = {rdy_to_owner, valid_on_bus, data_on_bus};
@@ -99,7 +101,7 @@ module global_arbiter (
         // ready from modules through DATA_LOCAL interfaces
         .rdy_mem      (data_from_mem[9]),
         .rdy_aes      (data_from_aes[9]),
-        .rdy_sha      (data_from_sha[9]),
+        // .rdy_sha      (data_from_sha[9]),
 
         // ack bus handshake
         .id_on_ack    (id_on_ack),
@@ -122,13 +124,13 @@ module global_arbiter (
         // ack valid requests from ACK_LOCAL interfaces
         .ack_valid_from_ctrl (ack_valid_from_ctrl),
         .ack_valid_from_aes  (ack_valid_from_aes),
-        .ack_valid_from_sha  (ack_valid_from_sha),
+        // .ack_valid_from_sha  (ack_valid_from_sha),
         .ack_valid_from_mem  (ack_valid_from_mem),
 
         // ready back to ACK_LOCAL interfaces
         .ack_ready_to_ctrl   (ack_ready_to_ctrl),
         .ack_ready_to_aes    (ack_ready_to_aes),
-        .ack_ready_to_sha    (ack_ready_to_sha),
+        // .ack_ready_to_sha    (ack_ready_to_sha),
         .ack_ready_to_mem    (ack_ready_to_mem),
 
         // shared ack bus result

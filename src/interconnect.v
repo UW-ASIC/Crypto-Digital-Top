@@ -24,19 +24,19 @@ module interconnect_top (
     // shs
 
     // sha -> data bus
-    input  wire [7:0] data_in_sha,
-    input  wire       valid_in_sha,
-    output wire       ready_out_sha,
+    // input  wire [7:0] data_in_sha,
+    // input  wire       valid_in_sha,
+    // output wire       ready_out_sha,
 
-    // data bus -> sha
-    output wire [7:0] data_out_sha,
-    output wire       valid_out_sha,
-    input  wire       ready_in_sha,
+    // // data bus -> sha
+    // output wire [7:0] data_out_sha,
+    // output wire       valid_out_sha,
+    // input  wire       ready_in_sha,
 
-    // sha -> ack bus
-    input  wire [1:0] ack_id_in_sha,
-    input  wire       ack_valid_in_sha,
-    output wire       ack_ready_out_sha,
+    // // sha -> ack bus
+    // input  wire [1:0] ack_id_in_sha,
+    // input  wire       ack_valid_in_sha,
+    // output wire       ack_ready_out_sha,
 
     // aes
 
@@ -80,12 +80,12 @@ module interconnect_top (
     wire [9:0] data_to_locals;
 
     wire [9:0] data_from_mem_local;
-    wire [9:0] data_from_sha_local;
+    // wire [9:0] data_from_sha_local;
     wire [9:0] data_from_aes_local;
     wire [9:0] data_from_ctrl_local;
 
     wire [9:0] data_to_mem_local;
-    wire [9:0] data_to_sha_local;
+    // wire [9:0] data_to_sha_local;
     wire [9:0] data_to_aes_local;
     wire [9:0] data_to_ctrl_local;
 
@@ -126,26 +126,26 @@ module interconnect_top (
     assign data_out_mem  = data_to_mem_local[7:0];
 
     // sha DATA_LOCAL
-    data_bus_module_interface u_sha_data_local (
-        .rdy_rd_grant     (rdy_rd_grant[1]),
-        .dv_rd_grant      (dv_rd_grant[1]),
+    // data_bus_module_interface u_sha_data_local (
+    //     .rdy_rd_grant     (rdy_rd_grant[1]),
+    //     .dv_rd_grant      (dv_rd_grant[1]),
 
-        // from GLOBAL_ARB to local interface
-        .data_in          (data_to_locals),
+    //     // from GLOBAL_ARB to local interface
+    //     .data_in          (data_to_locals),
 
-        // from SHA module to local interface
-        .data_from_module ({ready_in_sha, valid_in_sha, data_in_sha}),
+    //     // from SHA module to local interface
+    //     .data_from_module ({ready_in_sha, valid_in_sha, data_in_sha}),
 
-        // from local interface to GLOBAL_ARB
-        .data_out         (data_from_sha_local),
+    //     // from local interface to GLOBAL_ARB
+    //     .data_out         (data_from_sha_local),
 
-        // from local interface to SHA module
-        .data_to_module   (data_to_sha_local)
-    );
+    //     // from local interface to SHA module
+    //     .data_to_module   (data_to_sha_local)
+    // );
 
-    assign ready_out_sha = data_to_sha_local[9];
-    assign valid_out_sha = data_to_sha_local[8];
-    assign data_out_sha  = data_to_sha_local[7:0];
+    // assign ready_out_sha = data_to_sha_local[9];
+    // assign valid_out_sha = data_to_sha_local[8];
+    // assign data_out_sha  = data_to_sha_local[7:0];
 
     // aes DATA_LOCAL
     data_bus_module_interface u_aes_data_local (
@@ -195,17 +195,17 @@ module interconnect_top (
 
     // ack local interface wires
     wire ack_valid_from_mem_local;
-    wire ack_valid_from_sha_local;
+    // wire ack_valid_from_sha_local;
     wire ack_valid_from_aes_local;
     wire ack_valid_from_ctrl_local;
 
     wire ack_ready_to_mem_local;
-    wire ack_ready_to_sha_local;
+    // wire ack_ready_to_sha_local;
     wire ack_ready_to_aes_local;
     wire ack_ready_to_ctrl_local;
 
     wire [1:0] ack_id_from_mem_local;
-    wire [1:0] ack_id_from_sha_local;
+    // wire [1:0] ack_id_from_sha_local;
     wire [1:0] ack_id_from_aes_local;
     wire [1:0] ack_id_from_ctrl_local;
 
@@ -225,16 +225,16 @@ module interconnect_top (
     );
 
     // sha ACK_LOCAL
-    ack_bus_module_interface u_sha_ack_local (
-        .ACK_READY                    (ack_ready_to_sha_local),
-        .ACK_READY_TO_MODULE           (ack_ready_out_sha),
+    // ack_bus_module_interface u_sha_ack_local (
+    //     .ACK_READY                    (ack_ready_to_sha_local),
+    //     .ACK_READY_TO_MODULE           (ack_ready_out_sha),
 
-        .MODULE_SIDE_ACK_VALID         (ack_valid_in_sha),
-        .ACK_VALID                     (ack_valid_from_sha_local),
+    //     .MODULE_SIDE_ACK_VALID         (ack_valid_in_sha),
+    //     .ACK_VALID                     (ack_valid_from_sha_local),
 
-        .MODULE_SIDE_MODULE_SOURCE_ID  (ack_id_in_sha),
-        .MODULE_SOURCE_ID              (ack_id_from_sha_local)
-    );
+    //     .MODULE_SIDE_MODULE_SOURCE_ID  (ack_id_in_sha),
+    //     .MODULE_SOURCE_ID              (ack_id_from_sha_local)
+    // );
 
 
     // aes ACK
@@ -269,7 +269,7 @@ module interconnect_top (
 
         // DATA_LOCALs -> GLOBAL_ARB
         .data_from_mem  (data_from_mem_local),
-        .data_from_sha  (data_from_sha_local),
+        // .data_from_sha  (data_from_sha_local),
         .data_from_aes  (data_from_aes_local),
         .data_from_ctrl (data_from_ctrl_local),
 
@@ -282,13 +282,13 @@ module interconnect_top (
 
         // ACK_LOCALs -> GLOBAL_ARB
         .ack_valid_from_mem  (ack_valid_from_mem_local),
-        .ack_valid_from_sha  (ack_valid_from_sha_local),
+        // .ack_valid_from_sha  (ack_valid_from_sha_local),
         .ack_valid_from_aes  (ack_valid_from_aes_local),
         .ack_valid_from_ctrl (ack_valid_from_ctrl_local),
 
         // GLOBAL_ARB -> ACK_LOCALs
         .ack_ready_to_mem  (ack_ready_to_mem_local),
-        .ack_ready_to_sha  (ack_ready_to_sha_local),
+        // .ack_ready_to_sha  (ack_ready_to_sha_local),
         .ack_ready_to_aes  (ack_ready_to_aes_local),
         .ack_ready_to_ctrl (ack_ready_to_ctrl_local),
 
@@ -298,7 +298,8 @@ module interconnect_top (
 
     // unused ack source id wires
     wire _unused_ack_ids;
-    assign _unused_ack_ids = ^{ ack_id_from_mem_local, ack_id_from_sha_local, ack_id_from_aes_local, 
+    // assign _unused_ack_ids = ^{ ack_id_from_mem_local, ack_id_from_sha_local, ack_id_from_aes_local, 
+    assign _unused_ack_ids = ^{ ack_id_from_mem_local, ack_id_from_aes_local, 
     ack_id_from_ctrl_local, data_to_ctrl_local[8:0]
     };
 

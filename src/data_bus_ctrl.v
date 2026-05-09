@@ -10,7 +10,7 @@ module data_bus_ctrl (
     // ready signal from module
     input wire rdy_mem,
     input wire rdy_aes,
-    input wire rdy_sha,
+    // input wire rdy_sha,
 
     // ack bus handshake
     input wire[1:0] id_on_ack,
@@ -62,9 +62,12 @@ module data_bus_ctrl (
     // opcode format matching
     wire rd_key_fire, rd_txt_fire, wr_txt_fire, hash_fire; 
     assign rd_key_fire = (opcode == 2'b00) && (dest == aes_id) && (src == mem_id);
-    assign rd_txt_fire = (opcode == 2'b01) && ((dest == aes_id) || (dest == sha_id)) && (src == mem_id);
-    assign wr_txt_fire = (opcode == 2'b10) && (dest == mem_id) && ((src == aes_id) || (src == sha_id));
-    assign hash_fire = (opcode == 2'b11) && ((dest == aes_id) || (dest == sha_id));
+    // assign rd_txt_fire = (opcode == 2'b01) && ((dest == aes_id) || (dest == sha_id)) && (src == mem_id);
+    assign rd_txt_fire = (opcode == 2'b01) && ((dest == aes_id)) && (src == mem_id);
+    // assign wr_txt_fire = (opcode == 2'b10) && (dest == mem_id) && ((src == aes_id) || (src == sha_id));
+    assign wr_txt_fire = (opcode == 2'b10) && (dest == mem_id) && ((src == aes_id));
+    // assign hash_fire = (opcode == 2'b11) && ((dest == aes_id) || (dest == sha_id));
+    assign hash_fire = (opcode == 2'b11) && ((dest == aes_id));
 
     // src ready and dest ready only for opcode
     reg src_rdy, dest_rdy;
@@ -72,11 +75,15 @@ module data_bus_ctrl (
 
     always @(*) begin
         if (state == idle) begin
-            src_rdy = (src == mem_id) ? rdy_mem : (src == aes_id) ? rdy_aes : (src == sha_id) ? rdy_sha : 0;
-            dest_rdy = (dest == mem_id) ? rdy_mem : (dest == aes_id) ? rdy_aes : (dest == sha_id) ? rdy_sha : 0;            
+            // src_rdy = (src == mem_id) ? rdy_mem : (src == aes_id) ? rdy_aes : (src == sha_id) ? rdy_sha : 0;
+            src_rdy = (src == mem_id) ? rdy_mem : (src == aes_id) ? rdy_aes : 0;
+            // dest_rdy = (dest == mem_id) ? rdy_mem : (dest == aes_id) ? rdy_aes : (dest == sha_id) ? rdy_sha : 0;            
+            dest_rdy = (dest == mem_id) ? rdy_mem : (dest == aes_id) ? rdy_aes : 0;            
         end else begin
-            src_rdy = (src_latch == mem_id) ? rdy_mem : (src_latch == aes_id) ? rdy_aes : (src_latch == sha_id) ? rdy_sha : 0;
-            dest_rdy = (dest_latch == mem_id) ? rdy_mem : (dest_latch == aes_id) ? rdy_aes : (dest_latch == sha_id) ? rdy_sha : 0;                  
+            // src_rdy = (src_latch == mem_id) ? rdy_mem : (src_latch == aes_id) ? rdy_aes : (src_latch == sha_id) ? rdy_sha : 0;
+            src_rdy = (src_latch == mem_id) ? rdy_mem : (src_latch == aes_id) ? rdy_aes : 0;
+            // dest_rdy = (dest_latch == mem_id) ? rdy_mem : (dest_latch == aes_id) ? rdy_aes : (dest_latch == sha_id) ? rdy_sha : 0;                  
+            dest_rdy = (dest_latch == mem_id) ? rdy_mem : (dest_latch == aes_id) ? rdy_aes : 0;                  
         end
     end
 
@@ -147,7 +154,8 @@ module data_bus_ctrl (
                     // keep same
                     if (hash_fire) begin
                         // id to 1hot decode
-                        n_dv_rd_grant = (dest == aes_id) ? aes_1b : (dest == sha_id) ? sha_1b : ctrl_1b;
+                        // n_dv_rd_grant = (dest == aes_id) ? aes_1b : (dest == sha_id) ? sha_1b : ctrl_1b;
+                        n_dv_rd_grant = (dest == aes_id) ? aes_1b : ctrl_1b;
 
                         n_dest_latch = dest;  // remember AES or SHA
                         rdy_to_owner = 0; //stall for 1 cycle 
