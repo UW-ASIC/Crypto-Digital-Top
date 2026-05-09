@@ -13,7 +13,7 @@ module control_top #(
   ) (
     output  wire       miso,
     input wire       mosi,
-    input  wire       ena,      // always 1 when the design is powered, so you can ignore it
+    // input  wire       ena,      // always 1 when the design is powered, so you can ignore it
     input  wire       clk,      // clock
     input  wire       spi_clk,
     input  wire       rst_n,    // reset_n - low to reset
@@ -31,7 +31,7 @@ module control_top #(
 wire [1:0] curr_mode_top_unused;
 wire [1:0] counter_top_unused;
 
-  wire valid;
+  // wire valid;
   wire [OPCODEW-1:0] opcode;
   wire [ADDRW-1:0] key_addr;
   wire [ADDRW-1:0] text_addr;
@@ -39,7 +39,7 @@ wire [1:0] counter_top_unused;
   wire req_q_valid;
 
   deserializer #(.ADDRW(ADDRW), .OPCODEW(OPCODEW)) deserializer_inst(.clk(clk), .rst_n(rst_n), .spi_clk(spi_clk), .mosi(mosi), .cs_n(cs_n), 
-  .aes_ready_in(aes_queue_ready), .sha_ready_in(sha_queue_ready), .valid(valid), .opcode(opcode), .key_addr(key_addr), .text_addr(text_addr), 
+  .aes_ready_in(aes_queue_ready), .sha_ready_in(sha_queue_ready), .opcode(opcode), .key_addr(key_addr), .text_addr(text_addr), 
   .dest_addr(dest_addr), .valid_out(req_q_valid));
 
   wire aes_fsm_ready, sha_fsm_ready;
@@ -85,7 +85,7 @@ wire [1:0] counter_top_unused;
   .data_out(compq_data), .valid_out(compq_valid_out), .ready_in(compq_ready_in));
 
   serializer #(.ADDRW(ADDRW)) serializer_inst(.clk(clk), .rst_n(rst_n), .n_cs(cs_n), .spi_clk(spi_clk), 
-  .valid_in(compq_valid_out), .addr(compq_data), .miso(miso), .ready_out(compq_ready_in), .err());
+  .valid_in(compq_valid_out), .addr(compq_data), .miso(miso), .ready_out(compq_ready_in));//, .err());
   
   wire _unused = &{counter_top_unused,curr_mode_top_unused};
 endmodule

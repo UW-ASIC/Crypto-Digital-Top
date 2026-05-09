@@ -38,10 +38,10 @@ module mem_txn_fsm(
     //Recv, MISO side for read key, read text commands
     input wire in_spi_valid, //tell the fsm the out_data is valid
     input wire [7:0] in_spi_data, //data to send to fsm
-    output wire out_spi_ready, //fsm tells the controller it is ready to receive the data
+    output wire out_spi_ready//, //fsm tells the controller it is ready to receive the data
 
     // only for testing error output
-    output reg err_flag
+    // output reg err_flag
 );
     // initial begin
     //     $dumpfile("mem_txn_fsm.vcd");
@@ -151,7 +151,7 @@ module mem_txn_fsm(
     // keep track type of poll
     reg [2:0] wip_poll_type, n_wip_poll_type;
     
-    reg n_err_flag, n_qed;
+    reg n_qed; //, n_err_flag;
 
     // to be changed for back pressure
     // cu to fsm only high when idle or send data when spi is ready or the buffer is empty
@@ -186,7 +186,7 @@ module mem_txn_fsm(
             addr_q <= 0;
             wip_poll_type <= 0;
             // only for testing
-            err_flag <= 0;
+            // err_flag <= 0;
             // quad enabled signal
             qed <= 0;
         end else begin
@@ -214,7 +214,7 @@ module mem_txn_fsm(
             opcode_q <= n_opcode_q;
 
             // only for testing
-            err_flag <= n_err_flag;
+            // err_flag <= n_err_flag;
             // quad enabled signal
             qed <= n_qed;
         end
@@ -250,7 +250,7 @@ module mem_txn_fsm(
         r_w = 1'b0;
         quad_enable = 1'b0;
         // test
-        n_err_flag = 0;  
+        // n_err_flag = 0;  
         // data latch
         n_data = data;
         // opcode/addr
@@ -266,7 +266,7 @@ module mem_txn_fsm(
                 quad_enable = 1'b0;
                 n_out_spi_valid = 1'b0;
                 n_out_cu_valid = 1'b0;
-                n_err_flag = 1'b1;  // latched error
+                // n_err_flag = 1'b1;  // latched error
                 next_state = err;                
             end
             // shared subroutines

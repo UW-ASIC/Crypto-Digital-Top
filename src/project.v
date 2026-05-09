@@ -239,10 +239,10 @@ mem_top u_mem_top (
     .OUT2(uio_out[2]),
     .OUT3(uio_out[3]),
 
-    .uio_oe(uio_oe[3:0]),
+    .uio_oe(uio_oe[3:0])//,
 
     // test only
-    .err()
+    // .err()
 );
 
 
@@ -255,7 +255,7 @@ assign ack_valid_ctrl_bus = 1'b0;
 control_top u_control_top (
     .miso(uo_out[0]),
     .mosi(ui_in[2]),
-    .ena(ena),
+    // .ena(ena),
     .spi_clk(ui_in[0]),
     .cs_n(ui_in[1]),
 

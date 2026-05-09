@@ -39,7 +39,7 @@ module aes (
                      AES_ID = 2'b10;
 
     reg hash_latch; // flag indicates its hash operation to distinguish between acking
-    reg wait_for_wr; // flag indicates its hash result havent get write to the bus
+    // reg wait_for_wr; // flag indicates its hash result havent get write to the bus
     // ------------------------------------------------------------------------
     // Interface to aes_core_rs
     // ------------------------------------------------------------------------

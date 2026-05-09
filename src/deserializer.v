@@ -13,7 +13,7 @@ module deserializer #(
     input  wire               aes_ready_in,
     input  wire               sha_ready_in,
     // OUTPUTS: opcode[1:0], key_addr[ADDRW-1:0], text_addr[ADDRW-1:0], valid_out
-    output reg                valid, 
+    // output reg                valid, 
     output reg  [OPCODEW-1:0] opcode,     
     output reg  [ADDRW-1:0]   key_addr,
     output reg  [ADDRW-1:0]   text_addr,
@@ -56,7 +56,7 @@ module deserializer #(
             cnt        <= {CW{1'b0}};
             shift_reg  <= {SHIFT_W{1'b0}};
             busy       <= 1'b0;
-            valid      <= 1'b0;
+            // valid      <= 1'b0;
             opcode     <= {OPCODEW{1'b0}};
             key_addr   <= {ADDRW{1'b0}};
             text_addr  <= {ADDRW{1'b0}};
@@ -89,23 +89,23 @@ module deserializer #(
             if (shift_reg[3*ADDRW]) begin
                 // SHA
                 if (busy && sha_ready_in) begin
-                    valid     <= shift_reg[SHIFT_W-1];
+                    // valid     <= shift_reg[SHIFT_W-1];
                     opcode    <= shift_reg[SHIFT_W-2 : 3*ADDRW];
                     key_addr  <= shift_reg[3*ADDRW-1 : 2*ADDRW]; 
                     text_addr <= shift_reg[2*ADDRW-1 : ADDRW];
                     dest_addr <= shift_reg[ADDRW-1 : 0];
-                    valid_out <= 1'b1;   
+                    valid_out <= shift_reg[SHIFT_W-1];   
                     busy      <= 1'b0;
                 end
             end else begin
                 // AES
                 if (busy && aes_ready_in) begin
-                    valid     <= shift_reg[SHIFT_W-1];
+                    // valid     <= shift_reg[SHIFT_W-1];
                     opcode    <= shift_reg[SHIFT_W-2 : 3*ADDRW];
                     key_addr  <= shift_reg[3*ADDRW-1 : 2*ADDRW]; 
                     text_addr <= shift_reg[2*ADDRW-1 : ADDRW];
                     dest_addr <= shift_reg[ADDRW-1 : 0];
-                    valid_out <= 1'b1;   
+                    valid_out <= shift_reg[SHIFT_W-1];   
                     busy      <= 1'b0;
                 end
             end

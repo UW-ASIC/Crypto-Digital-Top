@@ -10,8 +10,8 @@ module serializer #(
     input wire [ADDRW-1:0]      addr,
 
     output reg  miso,
-    output reg  ready_out,
-    output reg  err          //Error flag. Deserializer must reject collected data within txn 
+    output reg  ready_out//,
+    // output reg  err          //Error flag. Deserializer must reject collected data within txn 
 );
     localparam integer SHIFT_W  = ADDRW + 1; // include valid bit + addr
 
@@ -90,10 +90,10 @@ module serializer #(
             cnt         <= CNT_INIT;
             PISOreg     <= 0;
             miso        <= 1'b0;
-            err         <= 1'b0;
+            // err         <= 1'b0;
         end
         else begin
-            err         <= 1'b0;
+            // err         <= 1'b0;
             // handshake
             if (valid_in && ready_out) begin
                 PISOreg     <= {1'b1 , addr};
