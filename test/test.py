@@ -104,6 +104,7 @@ async def reset_dut(dut):
     dut.rst_n.value = 0
 
     await ClockCycles(dut.clk, 5)
+    dut.ena.value = 1
     dut.rst_n.value = 1
     dut.ui_in.value = 0
     dut.ui_in.value = UI_N_CS

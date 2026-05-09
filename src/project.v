@@ -20,12 +20,20 @@ module tt_um_uwasic_crypto (
 wire sclk = ui_in[0];
 wire cs = ui_in[1];
 wire mosi =  ui_in[2];
-wire miso = uo_out[0];
+wire miso = uo_out_int[0];
 
-initial begin
-    $dumpfile("p.vcd");
-    $dumpvars(0, tt_um_uwasic_crypto);
-end
+wire [7:0] uo_out_int;
+wire [7:0] uio_out_int;
+
+assign uo_out = uo_out_int & {8{ena}};
+assign uio_out = uio_out_int & {8{ena}};
+
+`ifndef SYNTHESIS
+    initial begin
+        $dumpfile("p.vcd");
+        $dumpvars(0, tt_um_uwasic_crypto);
+    end
+`endif
 
 // interconnect wire
 // mem
@@ -92,8 +100,8 @@ wire [2:0] ack_bus_ctrl;
 
 
 // unused top-level output pins
-assign uo_out[7:3]  = 5'b0;
-assign uio_out[7:4] = 4'b0;
+assign uo_out_int[7:3]  = 5'b0;
+assign uio_out_int[7:4] = 4'b0;
 assign uio_oe[7:4]  = 4'b0;
 
 
@@ -226,18 +234,18 @@ mem_top u_mem_top (
     .MODULE_SOURCE_ID(ack_id_mem_bus),
 
     // IOs
-    .CS(uo_out[2]),
-    .SCLK(uo_out[1]),
+    .CS(uo_out_int[2]),
+    .SCLK(uo_out_int[1]),
 
     .IN0(uio_in[0]),
     .IN1(uio_in[1]),
     .IN2(uio_in[2]),
     .IN3(uio_in[3]),
 
-    .OUT0(uio_out[0]),
-    .OUT1(uio_out[1]),
-    .OUT2(uio_out[2]),
-    .OUT3(uio_out[3]),
+    .OUT0(uio_out_int[0]),
+    .OUT1(uio_out_int[1]),
+    .OUT2(uio_out_int[2]),
+    .OUT3(uio_out_int[3]),
 
     .uio_oe(uio_oe[3:0])//,
 
@@ -253,7 +261,7 @@ assign ack_valid_ctrl_bus = 1'b0;
 
 // ctrl
 control_top u_control_top (
-    .miso(uo_out[0]),
+    .miso(uo_out_int[0]),
     .mosi(ui_in[2]),
     // .ena(ena),
     .spi_clk(ui_in[0]),
