@@ -56,8 +56,6 @@ module aes_fsm #(
     // debug only
     localparam MEM_ID = 2'b00;
 
-        wire enc_dec = req_data[73];
-        wire sha_aes = req_data[72];
   
         
     // FSM states
