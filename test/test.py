@@ -197,57 +197,95 @@ async def send_cpu_opcode(dut, opcode):
     # pull cs low
     dut.ui_in.value = 0
     await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
     # send 75 bits, msb first
     for bit_idx in range(74, -1, -1):
         bit = (opcode >> bit_idx) & 1
         mosi = UI_MOSI if bit else 0
-
-        # sclk low, set MOSI
+        if bit_idx >= 70:
+            dut._log.info(f"TB sending bit_idx={bit_idx}, bit={bit}")
+        # sclk low, set MOSI    
         dut.ui_in.value = mosi
         await RisingEdge(dut.clk)
-
+        await RisingEdge(dut.clk)
+        await RisingEdge(dut.clk)
+        await RisingEdge(dut.clk)
         # dut sample on rising
         dut.ui_in.value = mosi | UI_SCLK
+        await RisingEdge(dut.clk)
+        await RisingEdge(dut.clk)
+        await RisingEdge(dut.clk)
         await RisingEdge(dut.clk)
 
     # sclk low before ending
     dut.ui_in.value = 0
     await RisingEdge(dut.clk)
-
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
     # pull cs high
     dut.ui_in.value = UI_N_CS
     await RisingEdge(dut.clk)
 
 async def read_ack_op(dut):
     ack = 0
+
     # 25b MSB first
-    # idle cs high, sclk low
+    # idle: CS high, SCLK low
     dut.ui_in.value = UI_N_CS
     await RisingEdge(dut.clk)
 
-    # pull cs low
+    # pull CS low, SCLK still low
     dut.ui_in.value = 0
     await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
 
-    # read 25 bits, msb first
-    for bit_idx in range(24, -1, -1):
-        # sclk low, MOSI dummy 0
-        dut.ui_in.value = 0
-        await RisingEdge(dut.clk)
 
-        # dut output sampled on rising
+    # dummy rising edge, ignore MISO
+    dut.ui_in.value = UI_SCLK
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
+    # dummy falling edge, RTL prepares first bit
+    dut.ui_in.value = 0
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
+    # read 25 bits, MSB first
+    for _ in range(25):
+        # rising edge: CPU samples current MISO bit
         dut.ui_in.value = UI_SCLK
         await RisingEdge(dut.clk)
+        await RisingEdge(dut.clk)
+        await RisingEdge(dut.clk)
+        await RisingEdge(dut.clk)
 
-        # read MISO
         miso = 1 if (int(dut.uo_out.value) & UO_MISO) else 0
         ack = (ack << 1) | miso
 
-    # sclk low before ending
+        # falling edge: RTL prepares next MISO bit
+        dut.ui_in.value = 0
+        await RisingEdge(dut.clk)
+        await RisingEdge(dut.clk)
+        await RisingEdge(dut.clk)
+        await RisingEdge(dut.clk)
+
+    # end with SCLK low, then CS high
     dut.ui_in.value = 0
     await RisingEdge(dut.clk)
 
-    # pull cs high
     dut.ui_in.value = UI_N_CS
     await RisingEdge(dut.clk)
 
@@ -257,6 +295,12 @@ async def read_ack_op(dut):
     return valid, addr
 
 async def qspi_rd_txt(dut,text,length):
+    # WIP poll
+    opcode = await get_mem_output_return_spi(dut,0xff)
+    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
+
+    opcode = await get_mem_output_return_spi(dut,0xf0)
+    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
     """read text operation at certain addr"""
     dut.uio_in.value = 0
     # wait for mem qspi cs low
@@ -270,16 +314,25 @@ async def qspi_rd_txt(dut,text,length):
         # read qspi out bit 0
         bit = 1 if (int(dut.uio_out.value) & UIO_OUT_MEM_QSPI_0) else 0
         collected = (collected << 1) | bit
+
+    # t = get_sim_time(unit="ns")
+    # dut._log.info(f"[{t} ns] 8b opc")
     # 24b addr
     for _ in range(24):
         await wait_bit_rise(dut, dut.uo_out, UO_SCLK_MEM)
         # read qspi out bit 0
         bit = 1 if (int(dut.uio_out.value) & UIO_OUT_MEM_QSPI_0) else 0
         addr = (addr << 1) | bit
+
+    # t = get_sim_time(unit="ns")
+    # dut._log.info(f"[{t} ns] 24b addr")
     #8 dummy
     for _ in range(8):
         # wait for mem qspi sclk rising
         await wait_bit_rise(dut, dut.uo_out, UO_SCLK_MEM)
+
+    # t = get_sim_time(unit="ns")
+    # dut._log.info(f"[{t} ns] 8b dummy")    
     # each half byte per cycle
     for i in range(length):
         cur_byte = (text >> (8*(length - 1 - i))) & 0xff 
@@ -292,11 +345,22 @@ async def qspi_rd_txt(dut,text,length):
 
     dut.uio_in.value = 0
 
+    t = get_sim_time(unit="ns")
+    dut._log.info(f"[{t} ns] input done")
+
     return collected,addr
 
 async def qspi_wr_txt(dut,length):
+    # WIP poll
+    opcode = await get_mem_output_return_spi(dut,0xff)
+    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
+
+    opcode = await get_mem_output_return_spi(dut,0xf0)
+    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
+
     """write text operation at certain addr"""
     # wait for mem qspi cs low
+    wren_opc = await get_mem_output_spi(dut,8)
     await wait_bit_low(dut, dut.uo_out, UO_N_CS_MEM)
     collected = 0x00
     addr = 0x000000
@@ -324,7 +388,7 @@ async def qspi_wr_txt(dut,length):
             cur_byte = (cur_half << (4*(1-j))) | cur_byte
         text = (text << 8) | cur_byte
 
-    return collected,addr,text
+    return wren_opc,collected,addr,text
 
 async def sha_flash_model(dut, text):
     # rd txt
@@ -343,9 +407,9 @@ async def aes_flash_model(dut, key, text):
     rd_txt_opc, rd_txt_addr = await qspi_rd_txt(dut, text, 16)
 
     # wr txt
-    wr_opc, wr_addr, output_txt = await qspi_wr_txt(dut, 16)
+    wren_opc, wr_opc, wr_addr, output_txt = await qspi_wr_txt(dut, 16)
 
-    return rd_key_opc, rd_key_addr, rd_txt_opc, rd_txt_addr, wr_opc, wr_addr, output_txt
+    return rd_key_opc, rd_key_addr, rd_txt_opc, rd_txt_addr,wren_opc, wr_opc, wr_addr, output_txt
 
 @cocotb.test()
 async def reset_test(dut):
@@ -429,6 +493,7 @@ async def reset_test(dut):
 
 # @cocotb.test()
 async def sha_encryption_test(dut):
+    await reset_test(dut)
     cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())
     dut._log.info("SHA Encryption Start")
     text_addr = 0xff0000
@@ -461,9 +526,10 @@ async def sha_encryption_test(dut):
     assert output_txt == hashed_int, f"output_txt expected {hashed_int:#x} got {output_txt:#x}"
     dut._log.info("SHA Encryption Passed")
 
-# @cocotb.test()
+@cocotb.test()
 async def aes_encryption_test(dut):
     cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())
+    # await reset_test(dut)
     dut._log.info("AES Encryption Start")
     key_addr = 0xfd0000
     text_addr = 0xff0000
@@ -479,6 +545,9 @@ async def aes_encryption_test(dut):
     text_int = int.from_bytes(text, "big")
     key_int = int.from_bytes(key,"big")
     encrypted_int = int.from_bytes(encrypted, "big")
+
+    dut._log.info(f"Key: {key_int:#x}")
+
     # aes encrypt
     cpu_opcode = make_opcode(1,key_addr,text_addr,dest_addr,0,0)
     # flash coroutine
@@ -491,10 +560,11 @@ async def aes_encryption_test(dut):
     while valid != 1:
         valid, dest = await read_ack_op(dut)
         await RisingEdge(dut.clk)
-    rd_key_opc, rd_key_addr , rd_txt_opc,rd_txt_addr, wr_opc, wr_addr, output_txt = await flash_task
+    rd_key_opc, rd_key_addr , rd_txt_opc,rd_txt_addr,wren_opc, wr_opc, wr_addr, output_txt = await flash_task
 
     assert rd_key_opc == 0x6B, f"Opcode expected 0x6B got {rd_key_opc:#02x}"
     assert rd_txt_opc == 0x6B, f"Opcode expected 0x6B got {rd_txt_opc:#02x}"
+    assert wren_opc == 0x06, f"Opcode expected 0x06 got {wren_opc:#02x}"
     assert wr_opc == 0x32, f"Opcode expected 0x32 got {wr_opc:#02x}"
     
     assert rd_key_addr == key_addr, f"key_addr expected {key_addr:#x} got {rd_key_addr:#x}"
@@ -508,6 +578,8 @@ async def aes_encryption_test(dut):
 # @cocotb.test()
 async def aes_decryption_test(dut):
     cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())
+    await reset_test(dut)
+    
     dut._log.info("AES Decryption Start")
     key_addr = 0xfd0000
     text_addr = 0xff0000
@@ -518,7 +590,7 @@ async def aes_decryption_test(dut):
     # AES-256 ECB encrypt one 16-byte block
     cipher = AES.new(key, AES.MODE_ECB)
     encrypted = cipher.encrypt(text)
-
+    
     #conver to int
     text_int = int.from_bytes(text, "big")
     key_int = int.from_bytes(key,"big")
@@ -528,6 +600,15 @@ async def aes_decryption_test(dut):
     # flash coroutine
     flash_task = cocotb.start_soon(aes_flash_model(dut,key_int,encrypted_int))
 
+    dut._log.info(f"Key: {key_int:#x}")
+    dut._log.info(f"Text: {text_int:#x}")
+    dut._log.info(f"Encrypted: {encrypted_int:#x}")
+
+    dut._log.info(f"cpu_opcode = {cpu_opcode:075b}")
+    dut._log.info(f"valid={(cpu_opcode >> 74) & 1}")
+    dut._log.info(f"decrypt_bit={(cpu_opcode >> 73) & 1}")
+    dut._log.info(f"sha_bit={(cpu_opcode >> 72) & 1}")
+
     await send_cpu_opcode(dut,cpu_opcode) # send opcode
     
     await ClockCycles(dut.clk,5)
@@ -535,10 +616,11 @@ async def aes_decryption_test(dut):
     while valid != 1:
         valid, dest = await read_ack_op(dut)
         await RisingEdge(dut.clk)
-    rd_key_opc, rd_key_addr , rd_txt_opc,rd_txt_addr, wr_opc, wr_addr, output_txt = await flash_task
+    rd_key_opc, rd_key_addr , rd_txt_opc,rd_txt_addr,wren_opc, wr_opc, wr_addr, output_txt = await flash_task
 
     assert rd_key_opc == 0x6B, f"Opcode expected 0x6B got {rd_key_opc:#02x}"
     assert rd_txt_opc == 0x6B, f"Opcode expected 0x6B got {rd_txt_opc:#02x}"
+    assert wren_opc == 0x06, f"Opcode expected 0x06 got {wren_opc:#02x}"
     assert wr_opc == 0x32, f"Opcode expected 0x32 got {wr_opc:#02x}"
     
     assert rd_key_addr == key_addr, f"key_addr expected {key_addr:#x} got {rd_key_addr:#x}"
