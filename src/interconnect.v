@@ -302,5 +302,6 @@ module interconnect_top (
     assign _unused_ack_ids = ^{ ack_id_from_mem_local, ack_id_from_aes_local, 
     ack_id_from_ctrl_local, data_to_ctrl_local[8:0]
     };
+    wire _unused = {rdy_rd_grant[1], dv_rd_grant[1]};
 
 endmodule

@@ -54,19 +54,19 @@ wire ack_ready_bus_mem;
 
 // sha
 // sha -> data bus
-wire [7:0] data_sha_bus;
-wire valid_sha_bus;
-wire ready_bus_sha;
+// wire [7:0] data_sha_bus;
+// wire valid_sha_bus;
+// wire ready_bus_sha;
 
 // data bus -> sha
-wire [7:0] data_bus_sha;
-wire valid_bus_sha;
-wire ready_sha_bus;
+// wire [7:0] data_bus_sha;
+// wire valid_bus_sha;
+// wire ready_sha_bus;
 
 // sha -> ack bus
-wire [1:0] ack_id_sha_bus;
-wire ack_valid_sha_bus;
-wire ack_ready_bus_sha;
+// wire [1:0] ack_id_sha_bus;
+// wire ack_valid_sha_bus;
+// wire ack_ready_bus_sha;
 
 // aes
 // aes -> data bus
