@@ -169,26 +169,26 @@ interconnect_top u_interconnect_top (
 );
 
 
-// sha
-sha u_sha (
-    .clk(clk),
-    .rst_n(rst_n),
+// // sha
+// sha u_sha (
+//     .clk(clk),
+//     .rst_n(rst_n),
 
-    // data bus -> sha
-    .data_in(data_bus_sha),
-    .ready_in(ready_sha_bus),
-    .valid_in(valid_bus_sha),
+//     // data bus -> sha
+//     .data_in(data_bus_sha),
+//     .ready_in(ready_sha_bus),
+//     .valid_in(valid_bus_sha),
 
-    // sha -> data bus
-    .data_out(data_sha_bus),
-    .data_ready(ready_bus_sha),
-    .data_valid(valid_sha_bus),
+//     // sha -> data bus
+//     .data_out(data_sha_bus),
+//     .data_ready(ready_bus_sha),
+//     .data_valid(valid_sha_bus),
 
-    // sha -> ack bus
-    .ack_ready(ack_ready_bus_sha),
-    .ack_valid(ack_valid_sha_bus),
-    .module_source_id(ack_id_sha_bus)
-);
+//     // sha -> ack bus
+//     .ack_ready(ack_ready_bus_sha),
+//     .ack_valid(ack_valid_sha_bus),
+//     .module_source_id(ack_id_sha_bus)
+// );
 
 
 // aes
