@@ -38,6 +38,8 @@ module aes (
     localparam [1:0] MEM_ID = 2'b00,
                      AES_ID = 2'b10;
 
+    reg hash_latch; // flag indicates its hash operation to distinguish between acking
+    reg wait_for_wr; // flag indicates its hash result havent get write to the bus
     // ------------------------------------------------------------------------
     // Interface to aes_core_rs
     // ------------------------------------------------------------------------
@@ -131,12 +133,14 @@ module aes (
             byte_out        <= 8'd0;
             byte_valid      <= 1'b0;
             core_finished   <= 1'b0;
+
+            hash_latch  <= 1'b0;
         end else begin
             // Defaults every cycle
             core_ld_key_valid   <= 1'b0;
             core_ld_state_valid <= 1'b0;
             core_start          <= 1'b0;
-            byte_valid          <= 1'b0;
+            // byte_valid          <= 1'b0;
 
             case (cState)
                 // ----------------------------------------------------------
@@ -160,6 +164,7 @@ module aes (
                                     core_start  <= 1'b1;   // 1-cycle pulse
                                     cState      <= HASH_OP;
                                     text_loaded <= 1'b0;   // consume current plaintext
+                                    hash_latch <= 1;
                                 end
                             end
                             // Load key
@@ -226,7 +231,7 @@ module aes (
                 HASH_OP: begin
                     if (core_done) begin
                         core_finished <= 1;
-                        cState   <= IDLE;
+                        cState   <= ACK_HOLD;
                         byte_cnt <= 6'd0;
                     end
                 end
@@ -235,14 +240,21 @@ module aes (
                 // TX_RES: stream ciphertext bytes out from core_state_out
                 // ----------------------------------------------------------
                 TX_RES: begin
-                    if (data_ready) begin
-                        byte_valid <= 1'b1;
+                    // If we are not currently holding a valid byte, load one
+                    if (!byte_valid && byte_cnt < 6'd16) begin
                         byte_out   <= core_state_out[127 - byte_cnt*8 -: 8];
-                        byte_cnt   <= byte_cnt + 1'b1;
+                        byte_valid <= 1'b1;
+                    end
+
+                    // If downstream accepts the current byte
+                    if (byte_valid && data_ready) begin
+                        byte_valid <= 1'b0;
 
                         if (byte_cnt == 6'd15) begin
-                            // Last byte this cycle
-                            cState <= ACK_HOLD;
+                            cState   <= ACK_HOLD;
+                            byte_cnt <= 6'd0;
+                        end else begin
+                            byte_cnt <= byte_cnt + 1'b1;
                         end
                     end
                 end
@@ -251,18 +263,38 @@ module aes (
                 // ACK_HOLD: wait for ack, then return to IDLE
                 // ----------------------------------------------------------
                 ACK_HOLD: begin
-                    if (ack_ready) begin
+                    if (ack_ready && !hash_latch) begin
                         cState <= IDLE;
                         key_loaded <= 1'b0;   // probably want to preserve key?
                         text_loaded <= 1'b0;
                         hdr_cnt <= 0;
                         byte_cnt <= 0;
                         core_finished <= 1'b0;
+                    end else if (ack_ready && hash_latch) begin
+                        cState <= IDLE;
+                        hdr_cnt <= 0;
+                        byte_cnt <= 0;
                     end
                 end
 
                 default: cState <= IDLE;
             endcase
         end
+    end
+
+    // to make my life easier by gpt
+    reg [255:0] cState_name;
+
+    always @(*) begin
+        case (cState)
+            IDLE:     cState_name = "IDLE";
+            RD_KEY:   cState_name = "RD_KEY";
+            RD_TEXT:  cState_name = "RD_TEXT";
+            HASH_OP:  cState_name = "HASH_OP";
+            TX_RES:   cState_name = "TX_RES";
+            ACK_HOLD: cState_name = "ACK_HOLD";
+
+            default:  cState_name = "UNKNOWN";
+        endcase
     end
 endmodule

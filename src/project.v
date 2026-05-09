@@ -20,6 +20,7 @@ module tt_um_uwasic_crypto (
 wire sclk = ui_in[0];
 wire cs = ui_in[1];
 wire mosi =  ui_in[2];
+wire miso = uo_out[0];
 
 initial begin
     $dumpfile("p.vcd");

@@ -77,12 +77,12 @@ module comp_queue #(
             data_out <= 0;
         end else begin
             // Debug output around failing cycle (simulation only)
-`ifndef SYNTHESIS
-            if ($time >= 2250000 && $time <= 2290000) begin
-                $display("[%0t] rr_select=%0b | valid_in_aes=%b valid_in_sha=%b | aes_sel=%b sha_sel=%b | enq_valid=%b enq_ready=%b | count=%0d | tail=%0d",
-                    $time, rr_select, valid_in_aes, valid_in_sha, aes_sel, sha_sel, enq_valid, enq_ready, count, tail);
-            end
-`endif
+            `ifndef SYNTHESIS
+                        if ($time >= 2250000 && $time <= 2290000) begin
+                            $display("[%0t] rr_select=%0b | valid_in_aes=%b valid_in_sha=%b | aes_sel=%b sha_sel=%b | enq_valid=%b enq_ready=%b | count=%0d | tail=%0d",
+                                $time, rr_select, valid_in_aes, valid_in_sha, aes_sel, sha_sel, enq_valid, enq_ready, count, tail);
+                        end
+            `endif
 
             // Enqueue logic
             if (do_enq) begin

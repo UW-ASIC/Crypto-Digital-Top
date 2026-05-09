@@ -52,6 +52,9 @@ module data_bus_ctrl (
     reg[1:0] dest_latch, src_latch, n_dest_latch, n_src_latch;
     assign dest = data_on_bus[5:4], src = data_on_bus[3:2], opcode = data_on_bus[1:0];
 
+    // hash latch
+    reg hash_latch, n_hash_latch; 
+
     // handshakes on data/ack bus
     wire ack_bus_fire;
     assign ack_bus_fire = valid_on_ack && ready_on_ack && (id_on_ack == src_latch);
@@ -90,6 +93,7 @@ module data_bus_ctrl (
             dest_latch <= 0;
             src_latch <= 0;
 
+            hash_latch <= 0;
             // rdy_to_owner <= 0;
         end else begin
             state <= n_state;
@@ -101,7 +105,8 @@ module data_bus_ctrl (
 
             dest_latch <= n_dest_latch;
             src_latch <= n_src_latch;
-
+            
+            hash_latch <= n_hash_latch;
             // rdy_to_owner <= n_rdy_to_owner;
         end
     end 
@@ -121,7 +126,7 @@ module data_bus_ctrl (
 
         rdy_to_owner = 0;
         // n_rdy_to_owner = rdy_to_owner;
-
+        n_hash_latch = hash_latch;
         case (state)
             // when ctrl owns the bus by default
             idle: begin
@@ -136,6 +141,8 @@ module data_bus_ctrl (
                 n_rdy_rd_grant = ctrl_1b;
                 n_dv_rd_grant = ctrl_1b;
 
+                n_hash_latch = 0;
+
                 if(valid_on_bus) begin
                     // keep same
                     if (hash_fire) begin
@@ -145,6 +152,7 @@ module data_bus_ctrl (
                         n_dest_latch = dest;  // remember AES or SHA
                         rdy_to_owner = 0; //stall for 1 cycle 
                         n_state = op_wait_ready;
+                        n_hash_latch = 1; // indicate hash opcode
                     end else if(rd_key_fire || rd_txt_fire || wr_txt_fire) begin
                         // handshake
                         rdy_to_owner = 0;
@@ -171,11 +179,8 @@ module data_bus_ctrl (
                     rdy_to_owner = dest_rdy;
 
                     if (valid_on_bus && dest_rdy) begin
-                        n_state = idle;
-                        n_dv_rd_grant = ctrl_1b;
-                        n_rdy_rd_grant = ctrl_1b;
-                        n_dest_latch = 0;
-                        n_src_latch = 0;
+                        n_state = addr;
+
                     end
                 end else begin
                     // normal rd/wr case: src and dest both need to see opcode
@@ -190,12 +195,18 @@ module data_bus_ctrl (
             // when src/dest contains mem, count 3 handshake update ownership
             addr: begin
                 // only mem needs handshake
-                rdy_to_owner = rdy_mem;
+                rdy_to_owner = hash_latch? dest_rdy : rdy_mem;
 
                 // count the handshake
-                n_counter = (valid_on_bus && rdy_mem) ? counter + 1: counter;
+                if (hash_latch) begin
+                    n_counter = (valid_on_bus && dest_rdy) ? counter + 1: counter;
+                end else begin
+                    n_counter = (valid_on_bus && rdy_mem) ? counter + 1: counter;
+                end
+                
+                
                 // when 2 beat handshaked and the third handshake 
-                if (counter == 2 && valid_on_bus && rdy_mem) begin
+                if (counter == 2 && valid_on_bus && rdy_mem && !hash_latch) begin
                     n_state = module_transmission;
                     n_data_sel = src_latch;
                     // set ready read grant to src module
@@ -204,6 +215,16 @@ module data_bus_ctrl (
                     n_counter = 0;
                     // rd grant reset
                     n_dv_rd_grant = clr(n_dv_rd_grant, src_latch);
+                end
+                if (counter == 2 && valid_on_bus && dest_rdy && hash_latch) begin
+                    n_state = idle;
+                    n_data_sel = ctrl_id;
+                    n_rdy_rd_grant = set(4'b0000, ctrl_id);
+                    // reset counter
+                    n_counter = 0;
+                    // rd grant reset
+                    n_dv_rd_grant = 0;
+                    n_hash_latch = 0;
                 end
             end
             // src module now owns the bus and ownership will be return upon ack handshake on ack bus

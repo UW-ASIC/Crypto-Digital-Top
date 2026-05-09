@@ -84,7 +84,7 @@ module global_arbiter (
     assign id_on_ack    = winner_source_id;
 
     // broadcast ack bus to ctrl
-    assign ack_bus_to_ctrl = {ack_valid_n, winner_source_id};
+    assign ack_bus_to_ctrl = {valid_on_ack, winner_source_id};
     // data bus controller
     // controls data_sel, read grants, and ready-to-current-owner
 

@@ -48,6 +48,9 @@ module req_queue #(
     reg [IDXW - 1:0] shaWriteIdx;
     reg shaFull;
 
+    wire aes_empty = aesReadIdx == aesWriteIdx;
+    wire sha_empty = shaReadIdx == shaWriteIdx;
+
     assign ready_out_aes = (aesReadIdx != aesWriteIdx || !aesFull) && rst_n;
     assign ready_out_sha = (shaReadIdx != shaWriteIdx || !shaFull) && rst_n;
     assign valid_out_aes = (aesReadIdx != aesWriteIdx || aesFull) && rst_n;
@@ -93,14 +96,15 @@ module req_queue #(
                     end
                 end
             end
-            if (ready_in_aes) begin
+
+            if (ready_in_aes && !aes_empty) begin
                 if (aesReadIdx == LAST_IDX) 
                     aesReadIdx <= {IDXW{1'b0}};
                 else 
                     aesReadIdx <= aesReadIdx + 1;
                 aesFull <= 0;
             end
-            if (ready_in_sha) begin
+            if (ready_in_sha && !sha_empty) begin
                 if (shaReadIdx == LAST_IDX) 
                     shaReadIdx <= {IDXW{1'b0}};
                 else 

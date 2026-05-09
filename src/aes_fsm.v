@@ -53,9 +53,13 @@ module aes_fsm #(
     // Data bus interface
     output reg [ADDRW+7:0]   data_out
 );
-
+    // debug only
     localparam MEM_ID = 2'b00;
 
+        wire enc_dec = req_data[73];
+        wire sha_aes = req_data[72];
+  
+        
     // FSM states
     localparam READY        = 4'b0000;
     localparam RDKEY        = 4'b0001;
@@ -122,7 +126,7 @@ module aes_fsm #(
             end
 
             WAIT_MEMWR: begin
-                if (ack_in == {1'b1, MEM_ID}) next_state = COMPLETE;
+                if (ack_in == {1'b1, ACCEL_ID}) next_state = COMPLETE;
             end
 
             COMPLETE: begin

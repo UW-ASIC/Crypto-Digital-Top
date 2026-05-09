@@ -25,7 +25,7 @@ module serializer #(
     
     reg [1:0] sync_n_cs;                       //sync reg
     reg [1:0] hist;                            //similar to clockstat, used to detect held values. 
-    reg valid_ncs;                             //clean ncs 
+    reg valid_ncs;                           //clean ncs
 
     ////////////////////////////////////
     //fSPIclk < fclk
@@ -61,11 +61,23 @@ module serializer #(
             hist            <= 2'b11;
             valid_ncs       <= 1'b1;                      //default ncs is high
         end else begin
-            if (negedgeSPI) begin
-                hist <= {hist[0], sync_n_cs[1]};          //shift reg effectively allows 1 spi clock delay as it takes 1 clock cycle to update reg to both be equal
-                if (hist[1] == hist[0]) begin
-                    valid_ncs <= hist[1]; 
-                end
+            hist <= {hist[0], sync_n_cs[1]};          //shift reg effectively allows 1 spi clock delay as it takes 1 clock cycle to update reg to both be equal
+            if (hist[1] == hist[0]) begin
+                valid_ncs <= hist[1]; 
+            end
+        end
+    end 
+    // if the current ncs is low then wait for next ncs
+    reg mid_poll;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            mid_poll <= 0;
+        end else begin
+            if (valid_in && ready_out && !valid_ncs) begin
+                mid_poll <=1;
+            end
+            if (valid_ncs) begin
+                mid_poll <=0;
             end
         end
     end
@@ -80,33 +92,24 @@ module serializer #(
             miso        <= 1'b0;
             err         <= 1'b0;
         end
-        else if (~valid_ncs) begin
-            if (valid_in && ready_out == 1 && negedgeSPI) begin
+        else begin
+            err         <= 1'b0;
+            // handshake
+            if (valid_in && ready_out) begin
                 PISOreg     <= {1'b1 , addr};
                 ready_out   <= 0;
                 cnt         <= CNT_INIT;
-                miso        <= 1'b1;
-            end else if (negedgeSPI && !ready_out) begin
-                miso        <= PISOreg[SHIFT_W-1];
-                PISOreg     <= {PISOreg[SHIFT_W-2:0], 1'b0};
-
-                if (cnt != 1) begin
-                    cnt <= cnt - 1;
-                end else begin 
-                    ready_out <= 1;
+            end else if (!valid_ncs && !ready_out && !mid_poll) begin
+                if (negedgeSPI) begin
+                    miso <= PISOreg[SHIFT_W-1];
+                    PISOreg     <= {PISOreg[SHIFT_W-2:0], 1'b0};
+                    if (cnt != 0) begin
+                        cnt <= cnt - 1;
+                    end else begin 
+                        ready_out <= 1;
+                    end
                 end
             end
-
-        ////////////////////////////////////
-        //Error handling
-        end else if (valid_ncs && !ready_out) begin //ncs goes high while ready_out still ongoing, clear error state and raise flag
-            err         <= 1'b1;
-            ready_out   <= 1;
-            cnt         <= CNT_INIT;
-            PISOreg     <= 0;
-            miso        <= 1'b0;
-        end else begin
-            err <= 1'b0;
         end
     end
 
