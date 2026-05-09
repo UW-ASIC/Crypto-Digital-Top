@@ -282,19 +282,19 @@ module aes (
         end
     end
 
-    // to make my life easier by gpt
-    reg [255:0] cState_name;
+    // // to make my life easier by gpt
+    // reg [255:0] cState_name;
 
-    always @(*) begin
-        case (cState)
-            IDLE:     cState_name = "IDLE";
-            RD_KEY:   cState_name = "RD_KEY";
-            RD_TEXT:  cState_name = "RD_TEXT";
-            HASH_OP:  cState_name = "HASH_OP";
-            TX_RES:   cState_name = "TX_RES";
-            ACK_HOLD: cState_name = "ACK_HOLD";
+    // always @(*) begin
+    //     case (cState)
+    //         IDLE:     cState_name = "IDLE";
+    //         RD_KEY:   cState_name = "RD_KEY";
+    //         RD_TEXT:  cState_name = "RD_TEXT";
+    //         HASH_OP:  cState_name = "HASH_OP";
+    //         TX_RES:   cState_name = "TX_RES";
+    //         ACK_HOLD: cState_name = "ACK_HOLD";
 
-            default:  cState_name = "UNKNOWN";
-        endcase
-    end
+    //         default:  cState_name = "UNKNOWN";
+    //     endcase
+    // end
 endmodule

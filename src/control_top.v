@@ -28,6 +28,9 @@ module control_top #(
   localparam AES_INSTRW = 3*ADDRW + OPCODEW;
   localparam SHA_INSTRW = 2*ADDRW + OPCODEW;
 
+wire [1:0] curr_mode_top_unused;
+wire [1:0] counter_top_unused;
+
   wire valid;
   wire [OPCODEW-1:0] opcode;
   wire [ADDRW-1:0] key_addr;
@@ -69,7 +72,8 @@ module control_top #(
   wire aes_arb_grant, sha_arb_grant;
   bus_arbiter #(.ADDRW(ADDRW)) bus_arbiter_inst (.clk(clk), .rst_n(rst_n), .sha_req(sha_arb_req), 
   .aes_req(aes_arb_req), .sha_data_in(sha_fsm_data), .aes_data_in(aes_fsm_data), .bus_ready(bus_ready), 
-  .data_out(data_bus_out), .valid_out(data_bus_valid), .aes_grant(aes_arb_grant), .sha_grant(sha_arb_grant));
+  .data_out(data_bus_out), .valid_out(data_bus_valid), .aes_grant(aes_arb_grant), .sha_grant(sha_arb_grant), 
+  .curr_mode_top(curr_mode_top_unused), .counter_top(counter_top_unused));
 
 
   wire [ADDRW-1:0] compq_data;
@@ -82,4 +86,6 @@ module control_top #(
 
   serializer #(.ADDRW(ADDRW)) serializer_inst(.clk(clk), .rst_n(rst_n), .n_cs(cs_n), .spi_clk(spi_clk), 
   .valid_in(compq_valid_out), .addr(compq_data), .miso(miso), .ready_out(compq_ready_in), .err());
+  
+  wire _unused = &{counter_top_unused,curr_mode_top_unused};
 endmodule

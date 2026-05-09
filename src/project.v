@@ -268,7 +268,7 @@ control_top u_control_top (
     .data_bus_out(data_ctrl_bus),
     .data_bus_valid(valid_ctrl_bus)
 );
-wire _unused = &{1'b0, uio_in[7:3], uio_in[7:4],sclk,cs,mosi, ack_ready_bus_ctrl};
+wire _unused = &{1'b0, ui_in[7:3],uio_in[7:3], uio_in[7:4],sclk,cs,mosi, miso, ack_ready_bus_ctrl};
 
 endmodule
 
