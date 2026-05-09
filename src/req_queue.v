@@ -1,7 +1,7 @@
 module req_queue #(
     parameter ADDRW = 24,
     parameter OPCODEW = 2,
-    parameter QDEPTH = 16
+    parameter QDEPTH = 4
 ) (
     input wire clk,
     input wire rst_n,

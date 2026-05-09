@@ -1,6 +1,6 @@
 module comp_queue #(
     parameter ADDRW  = 24,
-    parameter QDEPTH = 32
+    parameter QDEPTH = 4
 )(
     input  wire clk,
     input  wire rst_n,
