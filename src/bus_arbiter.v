@@ -98,6 +98,7 @@ always @(posedge clk or negedge rst_n) begin
                     counter <= 2'b00;
                 end
             end
+        end
 
         if (counter == 2'b11) begin
             if (curr_mode == AES) curr_mode <= (sha_req) ? SHA : 2'b00;
