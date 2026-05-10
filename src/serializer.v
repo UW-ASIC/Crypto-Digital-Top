@@ -74,7 +74,7 @@ module serializer #(
             mid_poll <= 0;
         end else begin
             if (valid_in && ready_out && !valid_ncs) begin
-                mid_poll <=1;
+                mid_poll <=0; //bye bye mid_poll
             end
             if (valid_ncs) begin
                 mid_poll <=0;
