@@ -118,7 +118,7 @@ module aes (
             cState          <= IDLE;
             byte_cnt        <= 5'd0;
             hdr_cnt         <= 3'd0;
-            header_byte     <= 5'd0;
+            header_byte     <= 6'd0;
 
             core_ld_key_valid   <= 1'b0;
             core_ld_key_byte    <= 8'd0;

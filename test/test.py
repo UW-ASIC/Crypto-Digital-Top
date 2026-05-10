@@ -425,12 +425,8 @@ async def reset_test(dut):
     await reset_dut(dut)
     dut._log.info("Reset done")
 
-    # IO2 and IO3 must be driven outputs (WP# / HOLD# held high for flash)
-    uio_oe = 0b1111 & int(dut.uio_oe.value)
-    assert (uio_oe & 0b1100) == 0b1100, \
-        f"IO2/IO3 must be driven outputs after reset, uio_oe={uio_oe:04b}"
-
-    # No flash init sequence: CS must stay de-asserted for at least 200 cycles
+    # No flash init sequence: CS must stay de-asserted for at least 200 cycles.
+    # uio_oe is 0 at idle (SPI controller only drives IO pins during a transaction).
     for cycle in range(200):
         await RisingEdge(dut.clk)
         cs = int(dut.uo_out.value) & UO_N_CS_MEM

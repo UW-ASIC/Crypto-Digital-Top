@@ -198,7 +198,7 @@ module aes_core_rs (
             // state_out   <= 128'd0;
 
             // state/key storage
-            key_idx     <= 6'd0;
+            key_idx     <= 5'd0;
             key_full    <= 1'b0;
 
             // state_load  <= 128'd0;

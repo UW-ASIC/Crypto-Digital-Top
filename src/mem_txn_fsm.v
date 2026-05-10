@@ -74,7 +74,6 @@ module mem_txn_fsm(
     `endif
 
     // wip poll type (page-program only)
-    localparam [1:0] none = 2'd0;
     localparam [1:0] pp   = 2'd1;
 
     localparam [1:0] aes_id = 2'd2;

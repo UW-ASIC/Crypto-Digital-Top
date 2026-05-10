@@ -137,7 +137,7 @@ module mem_command_port(
                 end
                 PASS_CMD_WAIT_READY: begin
                     out_fsm_valid <= 1'b1;
-                    out_fsm_data  <= internal_opcode;
+                    out_fsm_data  <= {2'b0, internal_opcode};
                     if (out_fsm_valid && in_fsm_ready) begin
                         // command accepted by FSM
                         out_fsm_valid <= 0;
