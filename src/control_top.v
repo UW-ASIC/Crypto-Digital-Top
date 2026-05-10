@@ -9,7 +9,7 @@ module control_top #(
   parameter ADDRW = 24,
   parameter OPCODEW = 2,
   parameter REQ_QDEPTH = 1,
-  parameter COMP_QDEPTH = 2
+  parameter COMP_QDEPTH = 1
   ) (
     output  wire       miso,
     input wire       mosi,
