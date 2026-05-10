@@ -47,8 +47,24 @@ always @(posedge clk or negedge rst_n) begin
             if (bus_ready) counter <= counter + 1;
             if (counter == 2'b11) curr_mode <= aes_req ? AES : 2'b00;
         end else begin
-            if (aes_req) curr_mode <= AES;
-            else         counter   <= 2'b00;
+            // Counter should always be 0 when curr_mode == 2'b00
+            if (bus_ready) begin
+                if (sha_req && aes_req) begin 
+                    curr_mode <= last_serviced ? 2'b10 : 2'b01;
+                end else if (aes_req) begin 
+                    curr_mode <= 2'b01;
+                end else if (sha_req) begin
+                    curr_mode <= 2'b10;
+                end else begin
+                    curr_mode <= 2'b00;
+                    counter <= 2'b00;
+                end
+            end
+        end
+
+        if (counter == 2'b11) begin
+            if (curr_mode == AES) curr_mode <= (sha_req) ? SHA : 2'b00;
+            else if (curr_mode == SHA) curr_mode <= (aes_req) ? AES : 2'b00;
         end
     end
 end

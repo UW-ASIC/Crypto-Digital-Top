@@ -21,7 +21,15 @@ UI_SCLK = 1 << 0   # ui_in[0]  SPI clock from HOST
 UI_N_CS = 1 << 1   # ui_in[1]  active-low SPI CS from HOST
 UI_MOSI = 1 << 2   # ui_in[2]  SPI MOSI from HOST
 
+UI_TIMING_SEL = 1 << 7 # fast initialization
+FAST_INIT_IN_TB = True
 
+def ui(bits):
+    return bits | (UI_TIMING_SEL if FAST_INIT_IN_TB else 0)
+
+def drive_ui(dut, bits):
+    dut.ui_in.value = ui(bits)
+    
 # =========================
 # Dedicated outputs: uo_out
 # =========================
@@ -106,8 +114,8 @@ async def reset_dut(dut):
     await ClockCycles(dut.clk, 5)
     dut.ena.value = 1
     dut.rst_n.value = 1
-    dut.ui_in.value = 0
-    dut.ui_in.value = UI_N_CS
+    drive_ui(dut, 0)
+    drive_ui(dut, UI_N_CS)   # keep fast-init high even during reset
     dut.uio_in.value = 0
     await ClockCycles(dut.clk, 2)
 
@@ -193,10 +201,10 @@ async def get_mem_output_return_spi(dut, returned):
 async def send_cpu_opcode(dut, opcode):
     # idle cs high, sclk low
     
-    dut.ui_in.value = UI_N_CS
+    drive_ui(dut, UI_N_CS)
     await RisingEdge(dut.clk)
     # pull cs low
-    dut.ui_in.value = 0
+    drive_ui(dut, 0)
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
@@ -210,28 +218,31 @@ async def send_cpu_opcode(dut, opcode):
     for bit_idx in range(74, -1, -1):
         bit = (opcode >> bit_idx) & 1
         mosi = UI_MOSI if bit else 0
-        if bit_idx >= 70:
-            dut._log.info(f"TB sending bit_idx={bit_idx}, bit={bit}")
+
         # sclk low, set MOSI    
-        dut.ui_in.value = mosi
+        # dut.ui_in.value = mosi
+        drive_ui(dut,mosi)
         await RisingEdge(dut.clk)
         await RisingEdge(dut.clk)
         await RisingEdge(dut.clk)
         await RisingEdge(dut.clk)
         # dut sample on rising
-        dut.ui_in.value = mosi | UI_SCLK
+        # dut.ui_in.value = mosi | UI_SCLK
+        drive_ui(dut,mosi | UI_SCLK)
         await RisingEdge(dut.clk)
         await RisingEdge(dut.clk)
         await RisingEdge(dut.clk)
         await RisingEdge(dut.clk)
 
     # sclk low before ending
-    dut.ui_in.value = 0
+    # dut.ui_in.value = 0
+    drive_ui(dut,0)
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
     # pull cs high
-    dut.ui_in.value = UI_N_CS
+    # dut.ui_in.value = UI_N_CS
+    drive_ui(dut, UI_N_CS)
     await RisingEdge(dut.clk)
 
 async def read_ack_op(dut):
@@ -239,11 +250,13 @@ async def read_ack_op(dut):
 
     # 25b MSB first
     # idle: CS high, SCLK low
-    dut.ui_in.value = UI_N_CS
+    # dut.ui_in.value = UI_N_CS
+    drive_ui(dut, UI_N_CS)
     await RisingEdge(dut.clk)
 
     # pull CS low, SCLK still low
-    dut.ui_in.value = 0
+    # dut.ui_in.value = 0
+    drive_ui(dut,0)
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
@@ -251,14 +264,16 @@ async def read_ack_op(dut):
 
 
     # dummy rising edge, ignore MISO
-    dut.ui_in.value = UI_SCLK
+    # dut.ui_in.value = UI_SCLK
+    drive_ui(dut, UI_SCLK)
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
 
     # dummy falling edge, RTL prepares first bit
-    dut.ui_in.value = 0
+    # dut.ui_in.value = 0
+    drive_ui(dut, 0)
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
@@ -267,7 +282,8 @@ async def read_ack_op(dut):
     # read 25 bits, MSB first
     for _ in range(25):
         # rising edge: CPU samples current MISO bit
-        dut.ui_in.value = UI_SCLK
+        # dut.ui_in.value = UI_SCLK
+        drive_ui(dut, UI_SCLK)
         await RisingEdge(dut.clk)
         await RisingEdge(dut.clk)
         await RisingEdge(dut.clk)
@@ -277,17 +293,20 @@ async def read_ack_op(dut):
         ack = (ack << 1) | miso
 
         # falling edge: RTL prepares next MISO bit
-        dut.ui_in.value = 0
+        # dut.ui_in.value = 0
+        drive_ui(dut, 0)
         await RisingEdge(dut.clk)
         await RisingEdge(dut.clk)
         await RisingEdge(dut.clk)
         await RisingEdge(dut.clk)
 
     # end with SCLK low, then CS high
-    dut.ui_in.value = 0
+    # dut.ui_in.value = 0
+    drive_ui(dut, 0)
     await RisingEdge(dut.clk)
 
-    dut.ui_in.value = UI_N_CS
+    # dut.ui_in.value = UI_N_CS
+    drive_ui(dut, UI_N_CS)
     await RisingEdge(dut.clk)
 
     valid = (ack >> 24) & 1

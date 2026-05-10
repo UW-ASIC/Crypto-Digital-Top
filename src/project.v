@@ -194,8 +194,9 @@ mem_top u_mem_top (
     .OUT2(uio_out_int[2]),
     .OUT3(uio_out_int[3]),
 
-    .uio_oe(uio_oe[3:0])//,
+    .uio_oe(uio_oe[3:0]),
 
+    .fast_init(ui_in[7])
     // test only
     // .err()
 );
@@ -223,7 +224,7 @@ control_top u_control_top (
     .data_bus_out(data_ctrl_bus),
     .data_bus_valid(valid_ctrl_bus)
 );
-wire _unused = &{1'b0, ui_in[7:3],uio_in[7:3], uio_in[7:4],sclk,cs,mosi, miso, ack_ready_bus_ctrl};
+wire _unused = &{1'b0, ui_in[6:3],uio_in[7:3], uio_in[7:4],sclk,cs,mosi, miso, ack_ready_bus_ctrl};
 
 endmodule
 

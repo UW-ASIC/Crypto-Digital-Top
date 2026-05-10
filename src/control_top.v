@@ -104,30 +104,18 @@ module control_top #(
   );
 
   wire [ADDRW-1:0] compq_data;
-  wire             compq_valid_out;
-  wire             compq_ready_in;
-
-  comp_queue #(.ADDRW(ADDRW), .QDEPTH(COMP_QDEPTH)) comp_queue_inst (
-    .clk          (clk),
-    .rst_n        (rst_n),
-    .valid_in_aes (compq_aes_valid),
-    .dest_addr_aes(compq_aes_data),
-    .ready_out_aes(compq_ready_aes),
-    .data_out     (compq_data),
-    .valid_out    (compq_valid_out),
-    .ready_in     (compq_ready_in)
-  );
-
-  serializer #(.ADDRW(ADDRW)) serializer_inst (
-    .clk      (clk),
-    .rst_n    (rst_n),
-    .n_cs     (cs_n),
-    .spi_clk  (spi_clk),
-    .valid_in (compq_valid_out),
-    .addr     (compq_data),
-    .miso     (miso),
-    .ready_out(compq_ready_in)
-  );
-
-  wire _unused = &{counter_top_unused, curr_mode_top_unused};
+  wire compq_valid_out;
+  wire compq_ready_in;
+  comp_queue #(.ADDRW(ADDRW), .QDEPTH(COMP_QDEPTH)) comp_queue_inst (.clk(clk), .rst_n(rst_n), 
+  .valid_in_aes(compq_aes_valid), .valid_in_sha(compq_sha_valid), .dest_addr_aes(compq_aes_data), 
+  .dest_addr_sha(compq_sha_data), .ready_out_aes(compq_ready_aes), .ready_out_sha(compq_ready_sha), 
+  .data_out(compq_data), .valid_out(compq_valid_out), .ready_in(compq_ready_in));
+  
+  wire ser_ready_out;
+  assign compq_ready_in = ser_ready_out & ~cs_n;
+  serializer #(.ADDRW(ADDRW)) serializer_inst(.clk(clk), .rst_n(rst_n), .n_cs(cs_n), .spi_clk(spi_clk), 
+  .valid_in(compq_valid_out), .addr(compq_data), .miso(miso), .ready_out(ser_ready_out));
+  
+  wire _unused = &{counter_top_unused,curr_mode_top_unused};
+  
 endmodule

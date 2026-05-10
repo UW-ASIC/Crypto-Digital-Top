@@ -55,8 +55,9 @@ module mem_top (
     output wire OUT2,
     output wire OUT3,
 
-    output wire [3:0] uio_oe//,
+    output wire [3:0] uio_oe,
 
+    input wire fast_init
     // test only
     // output wire err
 );
@@ -159,7 +160,7 @@ module mem_top (
     .in_fsm_done(fsm_cu_done),.out_address(cu_fsm_address),
     .in_start(fsm_spi_in_start),.r_w(fsm_spi_r_w),.quad_enable(fsm_spi_quad_enable),.in_spi_done(spi_fsm_done),
     .qed(fsm_spi_qed),.out_spi_valid(fsm_spi_valid),.out_spi_data(fsm_spi_data),.in_spi_ready(spi_fsm_ready),
-    .in_spi_valid(spi_fsm_valid),.in_spi_data(spi_fsm_data),.out_spi_ready(fsm_spi_ready)//,.err_flag(err)    
+    .in_spi_valid(spi_fsm_valid),.in_spi_data(spi_fsm_data),.out_spi_ready(fsm_spi_ready), .fast_init(fast_init)//,.err_flag(err)    
     );
     // spi port
     // //---- Transaction FSM connections ----
