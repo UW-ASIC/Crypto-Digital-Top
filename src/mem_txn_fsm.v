@@ -38,8 +38,9 @@ module mem_txn_fsm(
     //Recv, MISO side for read key, read text commands
     input wire in_spi_valid, //tell the fsm the out_data is valid
     input wire [7:0] in_spi_data, //data to send to fsm
-    output wire out_spi_ready//, //fsm tells the controller it is ready to receive the data
+    output wire out_spi_ready,//, //fsm tells the controller it is ready to receive the data
 
+    input wire fast_init
     // only for testing error output
     // output reg err_flag
 );
@@ -92,24 +93,30 @@ module mem_txn_fsm(
     // localparam [26:0] chip_erase_t = 27'd20_000_000; // 200ms will be comment out later this is just for simulation
     localparam [7:0] cpe_max = 8'd150;    
 
-    `ifdef SIMULATION
-        localparam [26:0] power_on      = 27'd200;      // 2,000 cycles  (20 µs)
-        localparam [26:0] page_program  = 27'd400;       // etc.
-        localparam [26:0] write_sr      = 27'd1000;
-        localparam [26:0] chip_erase_t  = 27'd2000;
-        initial $display("SIMULATION is ON in %m");
-    `else
-        localparam [26:0] power_on      = 27'd2000000;   // real values
-        localparam [26:0] page_program  = 27'd40000;
-        localparam [26:0] write_sr      = 27'd1000000;
-        localparam [26:0] chip_erase_t  = 27'd20000000;
-        // localparam [26:0] power_on      = 27'd20000;      // 2,000 cycles  (20 µs)
-        // localparam [26:0] page_program  = 27'd4000;       // etc.
-        // localparam [26:0] write_sr      = 27'd100000;
-        // localparam [26:0] chip_erase_t  = 27'd200000;
-        initial $display("SIMULATION is OFF in %m");
-    `endif
+    // `ifdef SIMULATION
+    //     localparam [26:0] power_on      = 27'd200;      // 2,000 cycles  (20 µs)
+    //     localparam [26:0] page_program  = 27'd400;       // etc.
+    //     localparam [26:0] write_sr      = 27'd1000;
+    //     localparam [26:0] chip_erase_t  = 27'd2000;
+    //     initial $display("SIMULATION is ON in %m");
+    // `else
+    //     localparam [26:0] power_on      = 27'd2000000;   // real values
+    //     localparam [26:0] page_program  = 27'd40000;
+    //     localparam [26:0] write_sr      = 27'd1000000;
+    //     localparam [26:0] chip_erase_t  = 27'd20000000;
+    //     // localparam [26:0] power_on      = 27'd20000;      // 2,000 cycles  (20 µs)
+    //     // localparam [26:0] page_program  = 27'd4000;       // etc.
+    //     // localparam [26:0] write_sr      = 27'd100000;
+    //     // localparam [26:0] chip_erase_t  = 27'd200000;
+    //     initial $display("SIMULATION is OFF in %m");
+    // `endif
+    wire [26:0] power_on = fast_init ? 27'd200 : 27'd1000000;
 
+    wire [26:0] page_program = fast_init ? 27'd400 : 27'd20000;
+
+    wire [26:0] write_sr = fast_init ? 27'd1000 : 27'd500000;
+
+    wire [26:0] chip_erase_t = fast_init ? 27'd2000 : 27'd10000000;
     
     // wip poll type
     localparam [2:0] none = 3'd0;  // no polling operation 
