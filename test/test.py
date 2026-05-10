@@ -414,83 +414,30 @@ async def aes_flash_model(dut, key, text):
 
 @cocotb.test()
 async def reset_test(dut):
-
-    # 50Mhz clk
+    """
+    Verify reset behaviour after flash-init removal.
+    Flash is assumed pre-configured (QE bit set, pre-erased).
+    The FSM now starts in idle immediately — no SPI init sequence.
+    """
     cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())
 
     dut._log.info("Reset start")
     await reset_dut(dut)
     dut._log.info("Reset done")
-    dut._log.info("Initialization flow start")
+
+    # IO2 and IO3 must be driven outputs (WP# / HOLD# held high for flash)
     uio_oe = 0b1111 & int(dut.uio_oe.value)
-    assert (uio_oe & 0b1100) == 0b1100, f"SPI mode: IO2/3 driven must be high, uio_oe={uio_oe:04b}"
-    assert uio_oe == 0b1101, f"uio_oe expected 0b1101 got {uio_oe:#04b}"
+    assert (uio_oe & 0b1100) == 0b1100, \
+        f"IO2/IO3 must be driven outputs after reset, uio_oe={uio_oe:04b}"
 
-    # WREN
-    opcode = await get_mem_output_spi(dut,8)
-    assert opcode == 0x06, f"Opcode expected 0x06 got {opcode:#02x}"
+    # No flash init sequence: CS must stay de-asserted for at least 200 cycles
+    for cycle in range(200):
+        await RisingEdge(dut.clk)
+        cs = int(dut.uo_out.value) & UO_N_CS_MEM
+        assert cs != 0, \
+            f"CS went low unexpectedly at cycle {cycle} — spurious SPI init detected"
 
-    # SW RST
-    opcode = await get_mem_output_spi(dut,8)
-    assert opcode == 0x66, f"Opcode expected 0x06 got {opcode:#02x}"
-
-    opcode = await get_mem_output_spi(dut,8)
-    assert opcode == 0x99, f"Opcode expected 0x99 got {opcode:#02x}"
-    dut._log.info("SW RST Done")
-
-    # WIP poll
-    opcode = await get_mem_output_return_spi(dut,0xff)
-    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
-
-    opcode = await get_mem_output_return_spi(dut,0xf0)
-    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
-
-    # WREN
-    opcode = await get_mem_output_spi(dut,8)
-    assert opcode == 0x06, f"Opcode expected 0x06 got {opcode:#02x}"
-   
-    # global unlock
-    opcode = await get_mem_output_spi(dut,8)
-    assert opcode == 0x98, f"Opcode expected 0x98 got {opcode:#02x}"
-    
-    # chip erase
-    opcode = await get_mem_output_spi(dut,8)
-    assert opcode == 0x06, f"Opcode expected 0x06 got {opcode:#02x}"
-
-    opcode = await get_mem_output_spi(dut,8)
-    assert opcode == 0xC7 or opcode == 0x60, f"Opcode expected 0xC7/0x60 got {opcode:#02x}"
-
-    # WIP poll
-    opcode = await get_mem_output_return_spi(dut,0xff)
-    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
-
-    opcode = await get_mem_output_return_spi(dut,0xf0)
-    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
-
-    # RDSR2
-    #  read stuatus reg 2
-    raw_sr2  = random.randint(0,255)
-    raw_sr2  &= ~(1 << 1)   # clear bit[1]
-    qe_sr2 = (raw_sr2 & ~(1 << 1)) | (1 << 1) # exp sr 2 to be shift out second bit be 1
-    opcode = await get_mem_output_return_spi(dut,raw_sr2)
-    assert opcode == 0x35, f"Opcode expected 0x35 got {opcode:#02x}"
-    # WREN
-    opcode = await get_mem_output_spi(dut,8)
-    assert opcode == 0x06, f"Opcode expected 0x06 got {opcode:#02x}"
-    opcode_qe_sr2 = (0x31 << 8) | qe_sr2
-    # WRSR2
-    opcode = await get_mem_output_spi(dut,16)
-    assert opcode == opcode_qe_sr2, f"Opcode expected {opcode_qe_sr2:#04x} got {opcode:#02x}"
-
-    # WIP poll
-    opcode = await get_mem_output_return_spi(dut,0xff)
-    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
-
-    opcode = await get_mem_output_return_spi(dut,0xf0)
-    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
-
-    await ClockCycles(dut.clk,20)
-    dut._log.info("Initialization flow done")
+    dut._log.info("Reset test passed: device idle, no SPI init activity")
 
 # @cocotb.test()
 async def sha_encryption_test(dut):
@@ -530,7 +477,7 @@ async def sha_encryption_test(dut):
 @cocotb.test()
 async def aes_encryption_test(dut):
     cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())
-    # await reset_test(dut)
+    await reset_dut(dut)
     dut._log.info("AES Encryption Start")
     key_addr = 0xfd0000
     text_addr = 0xff0000

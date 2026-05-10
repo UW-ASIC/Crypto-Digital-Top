@@ -29,10 +29,7 @@ PROJECT_SOURCES = project.v \
 	mem_top.v \
 	mem_txn_fsm.v \
 	req_queue.v \
-	scoreboard.v \
-	serializer.v \
-	sha_top.v \
-	sha_fsm.v
+	serializer.v
 
 # simulation flag
 COMPILE_ARGS += -DSIMULATION
