@@ -431,85 +431,82 @@ async def aes_flash_model(dut, key, text):
 
     return rd_key_opc, rd_key_addr, rd_txt_opc, rd_txt_addr,wren_opc, wr_opc, wr_addr, output_txt
 
-@cocotb.test()
-async def reset_test(dut):
-
-    # 50Mhz clk
-    cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())
-
-    dut._log.info("Reset start")
-    await reset_dut(dut)
-    dut._log.info("Reset done")
+async def flash_init(dut):
+    """Drive the testbench flash side through the hardware init sequence.
+    Call this immediately after reset_dut() — the DUT starts the sequence
+    autonomously and this coroutine must respond to each SPI transaction.
+    Returns the expected WRSR2 opcode so callers can assert if desired.
+    """
     dut._log.info("Initialization flow start")
     uio_oe = 0b1111 & int(dut.uio_oe.value)
     assert (uio_oe & 0b1100) == 0b1100, f"SPI mode: IO2/3 driven must be high, uio_oe={uio_oe:04b}"
     assert uio_oe == 0b1101, f"uio_oe expected 0b1101 got {uio_oe:#04b}"
 
     # WREN
-    opcode = await get_mem_output_spi(dut,8)
+    opcode = await get_mem_output_spi(dut, 8)
     assert opcode == 0x06, f"Opcode expected 0x06 got {opcode:#02x}"
 
     # SW RST
-    opcode = await get_mem_output_spi(dut,8)
-    assert opcode == 0x66, f"Opcode expected 0x06 got {opcode:#02x}"
-
-    opcode = await get_mem_output_spi(dut,8)
+    opcode = await get_mem_output_spi(dut, 8)
+    assert opcode == 0x66, f"Opcode expected 0x66 got {opcode:#02x}"
+    opcode = await get_mem_output_spi(dut, 8)
     assert opcode == 0x99, f"Opcode expected 0x99 got {opcode:#02x}"
-    dut._log.info("SW RST Done")
+    dut._log.info("SW RST done")
 
-    # WIP poll
-    opcode = await get_mem_output_return_spi(dut,0xff)
+    # WIP poll (busy → ready)
+    opcode = await get_mem_output_return_spi(dut, 0xff)
+    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
+    opcode = await get_mem_output_return_spi(dut, 0xf0)
     assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
 
-    opcode = await get_mem_output_return_spi(dut,0xf0)
-    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
-
-    # WREN
-    opcode = await get_mem_output_spi(dut,8)
+    # WREN + global unlock
+    opcode = await get_mem_output_spi(dut, 8)
     assert opcode == 0x06, f"Opcode expected 0x06 got {opcode:#02x}"
-   
-    # global unlock
-    opcode = await get_mem_output_spi(dut,8)
+    opcode = await get_mem_output_spi(dut, 8)
     assert opcode == 0x98, f"Opcode expected 0x98 got {opcode:#02x}"
-    
-    # chip erase
-    opcode = await get_mem_output_spi(dut,8)
-    assert opcode == 0x06, f"Opcode expected 0x06 got {opcode:#02x}"
 
-    opcode = await get_mem_output_spi(dut,8)
+    # WREN + chip erase
+    opcode = await get_mem_output_spi(dut, 8)
+    assert opcode == 0x06, f"Opcode expected 0x06 got {opcode:#02x}"
+    opcode = await get_mem_output_spi(dut, 8)
     assert opcode == 0xC7 or opcode == 0x60, f"Opcode expected 0xC7/0x60 got {opcode:#02x}"
 
-    # WIP poll
-    opcode = await get_mem_output_return_spi(dut,0xff)
+    # WIP poll (busy → ready)
+    opcode = await get_mem_output_return_spi(dut, 0xff)
+    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
+    opcode = await get_mem_output_return_spi(dut, 0xf0)
     assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
 
-    opcode = await get_mem_output_return_spi(dut,0xf0)
-    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
-
-    # RDSR2
-    #  read stuatus reg 2
-    raw_sr2  = random.randint(0,255)
-    raw_sr2  &= ~(1 << 1)   # clear bit[1]
-    qe_sr2 = (raw_sr2 & ~(1 << 1)) | (1 << 1) # exp sr 2 to be shift out second bit be 1
-    opcode = await get_mem_output_return_spi(dut,raw_sr2)
+    # RDSR2 — return SR2 with QE=0 so DUT writes it back with QE=1
+    raw_sr2 = random.randint(0, 255) & ~(1 << 1)
+    qe_sr2  = raw_sr2 | (1 << 1)
+    opcode  = await get_mem_output_return_spi(dut, raw_sr2)
     assert opcode == 0x35, f"Opcode expected 0x35 got {opcode:#02x}"
-    # WREN
-    opcode = await get_mem_output_spi(dut,8)
+
+    # WREN + WRSR2
+    opcode = await get_mem_output_spi(dut, 8)
     assert opcode == 0x06, f"Opcode expected 0x06 got {opcode:#02x}"
-    opcode_qe_sr2 = (0x31 << 8) | qe_sr2
-    # WRSR2
-    opcode = await get_mem_output_spi(dut,16)
-    assert opcode == opcode_qe_sr2, f"Opcode expected {opcode_qe_sr2:#04x} got {opcode:#02x}"
+    expected_wrsr2 = (0x31 << 8) | qe_sr2
+    opcode = await get_mem_output_spi(dut, 16)
+    assert opcode == expected_wrsr2, f"Opcode expected {expected_wrsr2:#04x} got {opcode:#04x}"
 
-    # WIP poll
-    opcode = await get_mem_output_return_spi(dut,0xff)
+    # WIP poll (busy → ready)
+    opcode = await get_mem_output_return_spi(dut, 0xff)
+    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
+    opcode = await get_mem_output_return_spi(dut, 0xf0)
     assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
 
-    opcode = await get_mem_output_return_spi(dut,0xf0)
-    assert opcode == 0x05, f"Opcode expected 0x05 got {opcode:#02x}"
-
-    await ClockCycles(dut.clk,20)
+    await ClockCycles(dut.clk, 20)
     dut._log.info("Initialization flow done")
+
+
+@cocotb.test()
+async def reset_test(dut):
+    cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())
+    dut._log.info("Reset start")
+    await reset_dut(dut)
+    dut._log.info("Reset done")
+    await flash_init(dut)
 
 # @cocotb.test()
 async def sha_encryption_test(dut):
@@ -549,7 +546,8 @@ async def sha_encryption_test(dut):
 @cocotb.test()
 async def aes_encryption_test(dut):
     cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())
-    # await reset_test(dut)
+    await reset_dut(dut)
+    await flash_init(dut)
     dut._log.info("AES Encryption Start")
     key_addr = 0xfd0000
     text_addr = 0xff0000
