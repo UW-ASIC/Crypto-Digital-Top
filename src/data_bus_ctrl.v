@@ -29,11 +29,10 @@ module data_bus_ctrl (
 );
     //src/dest ids
     localparam [1:0] ctrl_id = 2'b11, mem_id = 2'b00, aes_id = 2'b10, sha_id = 2'b01;
-    // ? tbd 
     localparam [3:0] mem_1b  = (4'b0001 << mem_id);
-    localparam [3:0] sha_1b  = (4'b0001 << sha_id);
     localparam [3:0] aes_1b  = (4'b0001 << aes_id);
     localparam [3:0] ctrl_1b = (4'b0001 << ctrl_id);
+    localparam [3:0] sha_1b  = (4'b0001 << sha_id);
     // default control ? after opcode byte handshaked goes to tansmission, back when ack bus handshake
     localparam [1:0] idle = 2'd0, op_wait_ready = 2'd1, addr = 2'd2, module_transmission = 2'd3;
 

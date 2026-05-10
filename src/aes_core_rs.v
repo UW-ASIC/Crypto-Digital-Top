@@ -30,7 +30,7 @@ module aes_core_rs (
     reg [127:0] state_reg_next;
     // goal: collapse state registers where possible.
 
-    reg [5:0]   key_idx;
+    reg [4:0]   key_idx;
     reg         key_full;
 
     reg [3:0]   state_idx;
@@ -236,10 +236,10 @@ module aes_core_rs (
                         2'd3: key_buf[key_idx[4:2]][7:0]   <= ld_key_byte;
                     endcase
 
-                    if (key_idx == 6'd31) begin
+                    if (key_idx == 5'd31) begin
                         key_full <= 1'b1;
                     end else begin
-                        key_idx <= key_idx + 6'd1;
+                        key_idx <= key_idx + 5'd1;
                     end
                 end
 
@@ -365,10 +365,9 @@ module aes_core_rs (
                 // ----------------------------------------------------------
                 S_OUT: begin
                     state_idx  <= 4'd0;
-                    key_idx  <= 6'd0;
+                    key_idx  <= 5'd0;
                     state_full <= 1'b0;
-                    key_full <= 0;
-                    state_full <= 0;
+                    key_full   <= 1'b0;
                     st         <= S_IDLE;
                 end
 

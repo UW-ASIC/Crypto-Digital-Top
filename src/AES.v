@@ -33,7 +33,7 @@ module aes (
                ACK_HOLD = 3'd5;
 
     reg [2:0]  cState;       // current FSM state
-    reg [5:0]  byte_cnt;     // up to 32 bytes
+    reg [4:0]  byte_cnt;     // up to 32 bytes (max 31 → 5 bits)
 
     localparam [1:0] MEM_ID = 2'b00,
                      AES_ID = 2'b10;
@@ -116,9 +116,9 @@ module aes (
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             cState          <= IDLE;
-            byte_cnt        <= 6'd0;
+            byte_cnt        <= 5'd0;
             hdr_cnt         <= 3'd0;
-            header_byte     <= 6'd0;
+            header_byte     <= 5'd0;
 
             core_ld_key_valid   <= 1'b0;
             core_ld_key_byte    <= 8'd0;
@@ -147,7 +147,7 @@ module aes (
                 // IDLE: accept commands (load key, load text, start, write)
                 // ----------------------------------------------------------
                 IDLE: begin
-                    byte_cnt       <= 6'd0;
+                    byte_cnt       <= 5'd0;
                     if (valid_in && (hdr_cnt < 3'd4)) begin
                         if (hdr_cnt == 3'd0) begin
                             // first beat: latch header
@@ -171,13 +171,13 @@ module aes (
                             else if (source_id == MEM_ID && dest_id == AES_ID &&
                                     opcode == OP_LOAD_KEY && !key_loaded) begin
                                 cState    <= RD_KEY;
-                                byte_cnt  <= 6'd0;
+                                byte_cnt  <= 5'd0;
                             end
                             // Load plaintext
                             else if (source_id == MEM_ID && dest_id == AES_ID &&
                                     opcode == OP_LOAD_TEXT && !text_loaded) begin
                                 cState    <= RD_TEXT;
-                                byte_cnt  <= 6'd0;
+                                byte_cnt  <= 5'd0;
                             end
                             // Write result (only after core_done)
                             else if (opcode  == OP_WRITE_RESULT &&
@@ -185,7 +185,7 @@ module aes (
                                     dest_id  == MEM_ID &&
                                     core_finished) begin
                                 cState   <= TX_RES;
-                                byte_cnt <= 6'd0;
+                                byte_cnt <= 5'd0;
                             end
                         end
                     end
@@ -200,7 +200,7 @@ module aes (
                         core_ld_key_byte  <= data_in;
                         byte_cnt          <= byte_cnt + 1'b1;
 
-                        if (byte_cnt == 6'd31) begin
+                        if (byte_cnt == 5'd31) begin
                             // 32nd byte just accepted
                             key_loaded <= 1'b1;
                             cState     <= IDLE;
@@ -217,7 +217,7 @@ module aes (
                         core_ld_state_byte  <= data_in;
                         byte_cnt            <= byte_cnt + 1'b1;
 
-                        if (byte_cnt == 6'd15) begin
+                        if (byte_cnt == 5'd15) begin
                             // 16th byte just accepted
                             text_loaded <= 1'b1;
                             cState      <= IDLE;
@@ -232,7 +232,7 @@ module aes (
                     if (core_done) begin
                         core_finished <= 1;
                         cState   <= ACK_HOLD;
-                        byte_cnt <= 6'd0;
+                        byte_cnt <= 5'd0;
                     end
                 end
 
@@ -241,7 +241,7 @@ module aes (
                 // ----------------------------------------------------------
                 TX_RES: begin
                     // If we are not currently holding a valid byte, load one
-                    if (!byte_valid && byte_cnt < 6'd16) begin
+                    if (!byte_valid && byte_cnt < 5'd16) begin
                         byte_out   <= core_state_out[127 - byte_cnt*8 -: 8];
                         byte_valid <= 1'b1;
                     end
@@ -250,9 +250,9 @@ module aes (
                     if (byte_valid && data_ready) begin
                         byte_valid <= 1'b0;
 
-                        if (byte_cnt == 6'd15) begin
+                        if (byte_cnt == 5'd15) begin
                             cState   <= ACK_HOLD;
-                            byte_cnt <= 6'd0;
+                            byte_cnt <= 5'd0;
                         end else begin
                             byte_cnt <= byte_cnt + 1'b1;
                         end
@@ -282,19 +282,4 @@ module aes (
         end
     end
 
-    // // to make my life easier by gpt
-    // reg [255:0] cState_name;
-
-    // always @(*) begin
-    //     case (cState)
-    //         IDLE:     cState_name = "IDLE";
-    //         RD_KEY:   cState_name = "RD_KEY";
-    //         RD_TEXT:  cState_name = "RD_TEXT";
-    //         HASH_OP:  cState_name = "HASH_OP";
-    //         TX_RES:   cState_name = "TX_RES";
-    //         ACK_HOLD: cState_name = "ACK_HOLD";
-
-    //         default:  cState_name = "UNKNOWN";
-    //     endcase
-    // end
 endmodule

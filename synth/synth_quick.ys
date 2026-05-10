@@ -1,0 +1,30 @@
+# synth_quick.ys — FF + cell count, no liberty file needed
+# Run: yosys synth/synth_quick.ys  (yosys native script format)
+
+read_verilog -sv src/project.v
+read_verilog -sv src/ack_bus_arbiter.v
+read_verilog -sv src/ack_bus_module_interface.v
+read_verilog -sv src/aes_fsm.v
+read_verilog -sv src/bus_arbiter.v
+read_verilog -sv src/comp_queue.v
+read_verilog -sv src/control_top.v
+read_verilog -sv src/data_bus_ctrl.v
+read_verilog -sv src/data_bus_module_interface.v
+read_verilog -sv src/deserializer.v
+read_verilog -sv src/global_arbiter.v
+read_verilog -sv src/interconnect.v
+read_verilog -sv src/mem_command_port.v
+read_verilog -sv src/mem_spi_controller.v
+read_verilog -sv src/mem_top.v
+read_verilog -sv src/mem_txn_fsm.v
+read_verilog -sv src/req_queue.v
+read_verilog -sv src/serializer.v
+read_verilog -sv src/mix_columns.v
+read_verilog -sv src/aes_core_rs.v
+read_verilog -sv src/AES.v
+read_verilog -sv src/roundkey_gen.v
+read_verilog -sv src/sbox.v
+read_verilog -sv src/sub_bytes.v
+
+synth -top tt_um_uwasic_crypto -flatten
+stat

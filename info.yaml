@@ -35,16 +35,13 @@ project:
     - "mem_top.v"
     - "mem_txn_fsm.v"
     - "req_queue.v"
-    - "scoreboard.v"
     - "serializer.v"
-    - "sha_fsm.v"
     - "mix_columns.v"
     - "aes_core_rs.v"
     - "AES.v"
     - "roundkey_gen.v"
     - "sbox.v"
     - "sub_bytes.v"
-    - "sha_top.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).

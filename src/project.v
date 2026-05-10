@@ -52,22 +52,6 @@ wire [1:0] ack_id_mem_bus;
 wire ack_valid_mem_bus;
 wire ack_ready_bus_mem;
 
-// sha
-// sha -> data bus
-// wire [7:0] data_sha_bus;
-// wire valid_sha_bus;
-// wire ready_bus_sha;
-
-// data bus -> sha
-// wire [7:0] data_bus_sha;
-// wire valid_bus_sha;
-// wire ready_sha_bus;
-
-// sha -> ack bus
-// wire [1:0] ack_id_sha_bus;
-// wire ack_valid_sha_bus;
-// wire ack_ready_bus_sha;
-
 // aes
 // aes -> data bus
 wire [7:0] data_aes_bus;
@@ -124,21 +108,6 @@ interconnect_top u_interconnect_top (
     .ack_valid_in_mem(ack_valid_mem_bus),
     .ack_ready_out_mem(ack_ready_bus_mem),
 
-    // sha -> data bus
-    // .data_in_sha(data_sha_bus),
-    // .valid_in_sha(valid_sha_bus),
-    // .ready_out_sha(ready_bus_sha),
-
-    // data bus -> sha
-    // .data_out_sha(data_bus_sha),
-    // .valid_out_sha(valid_bus_sha),
-    // .ready_in_sha(ready_sha_bus),
-
-    // sha -> ack bus
-    // .ack_id_in_sha(ack_id_sha_bus),
-    // .ack_valid_in_sha(ack_valid_sha_bus),
-    // .ack_ready_out_sha(ack_ready_bus_sha),
-
     // aes -> data bus
     .data_in_aes(data_aes_bus),
     .valid_in_aes(valid_aes_bus),
@@ -167,28 +136,6 @@ interconnect_top u_interconnect_top (
     // ack bus -> ctrl
     .ack_out_ctrl(ack_bus_ctrl)
 );
-
-
-// // sha
-// sha u_sha (
-//     .clk(clk),
-//     .rst_n(rst_n),
-
-//     // data bus -> sha
-//     .data_in(data_bus_sha),
-//     .ready_in(ready_sha_bus),
-//     .valid_in(valid_bus_sha),
-
-//     // sha -> data bus
-//     .data_out(data_sha_bus),
-//     .data_ready(ready_bus_sha),
-//     .data_valid(valid_sha_bus),
-
-//     // sha -> ack bus
-//     .ack_ready(ack_ready_bus_sha),
-//     .ack_valid(ack_valid_sha_bus),
-//     .module_source_id(ack_id_sha_bus)
-// );
 
 
 // aes

@@ -47,20 +47,20 @@ module mem_command_port(
     localparam WR_RES = 2'b10;
     localparam OTHER = 2'b11;
 
-    localparam IDLE = 4'h0;
-    localparam PASS_CMD = 4'h1;
-    localparam PASS_CMD_WAIT_READY = 4'h2;
-    localparam PERFORM_TRANSFER = 4'h3;
-    localparam TRY_ACK = 4'h4;
-    localparam ACK_RECEIVED = 4'h5;
+    localparam [2:0] IDLE               = 3'd0;
+    localparam [2:0] PASS_CMD           = 3'd1;
+    localparam [2:0] PASS_CMD_WAIT_READY = 3'd2;
+    localparam [2:0] PERFORM_TRANSFER   = 3'd3;
+    localparam [2:0] TRY_ACK            = 3'd4;
+    localparam [2:0] ACK_RECEIVED       = 3'd5;
 
     reg [1:0] fsm_opcode;
 
-    reg [3:0] state;
-    reg [7:0] counter;
+    reg [2:0] state;
+    reg [4:0] counter; // counts 0,8,16,24 — 5 bits sufficient
 
-    reg fsm_done_latch; // in fsm done latch and only clear in idle and reset
-    reg [7:0] internal_opcode; // reg to hold internal opcode
+    reg fsm_done_latch;
+    reg [5:0] internal_opcode; // only bits [5:0] used by FSM (dest/src/opcode)
     // wire enc_dec = in_bus_data[7];
     // wire [1:0] dest_id = in_bus_data[5:4];
     // wire [1:0] src_id = in_bus_data[3:2];
@@ -120,7 +120,7 @@ module mem_command_port(
                         endcase
                         fsm_opcode <= opcode;
                         // out_fsm_enc_type <= enc_dec;
-                        internal_opcode <= in_bus_data;
+                        internal_opcode <= in_bus_data[5:0];
                     end
                 end
 
@@ -128,7 +128,7 @@ module mem_command_port(
                     if(in_bus_valid && out_bus_ready) begin
                         out_address[counter + 7 -: 8] <= in_bus_data;
                         counter <= counter + 8;
-                        out_fsm_data <= internal_opcode;
+                        out_fsm_data <= {2'b0, internal_opcode};
                     end
                     if(counter >= 23) begin
                         out_fsm_valid <= 1;
