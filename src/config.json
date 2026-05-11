@@ -20,8 +20,8 @@
   "CLOCK_PERIOD": 21,
 
   "//": "Hold slack margin - Increase them in case you are getting hold violations.",
-  "PL_RESIZER_HOLD_SLACK_MARGIN": 0.1,
-  "GRT_RESIZER_HOLD_SLACK_MARGIN": 0.05,
+  "PL_RESIZER_HOLD_SLACK_MARGIN": 0.05,
+  "GRT_RESIZER_HOLD_SLACK_MARGIN": 0.0,
 
   "GRT_OVERFLOW_ITERS": 100,
   "GRT_LAYER_ADJUSTMENTS": "0,0.3,0,0.25,0,0",
