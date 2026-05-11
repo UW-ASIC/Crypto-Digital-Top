@@ -158,35 +158,31 @@ module aes (
 
                         if (hdr_cnt == 3'd3) begin
                             hdr_cnt <= 3'd0;
-                            // Start encryption (HASH_OP) — only if both key & text loaded
-                            if (dest_id == AES_ID && opcode == OP_HASH) begin
-                                if (key_loaded && text_loaded) begin
+                            casez ({source_id, dest_id, opcode, key_loaded, text_loaded, core_finished})
+                                // Start encryption (HASH_OP) — only if both key & text loaded
+                                {2'bZZ, AES_ID, OP_HASH, 1'b1, 1'b1, 1'bZ}: begin
                                     core_start  <= 1'b1;   // 1-cycle pulse
                                     cState      <= HASH_OP;
                                     text_loaded <= 1'b0;   // consume current plaintext
                                     hash_latch <= 1;
                                 end
-                            end
-                            // Load key
-                            else if (source_id == MEM_ID && dest_id == AES_ID &&
-                                    opcode == OP_LOAD_KEY && !key_loaded) begin
-                                cState    <= RD_KEY;
-                                byte_cnt  <= 5'd0;
-                            end
-                            // Load plaintext
-                            else if (source_id == MEM_ID && dest_id == AES_ID &&
-                                    opcode == OP_LOAD_TEXT && !text_loaded) begin
-                                cState    <= RD_TEXT;
-                                byte_cnt  <= 5'd0;
-                            end
-                            // Write result (only after core_done)
-                            else if (opcode  == OP_WRITE_RESULT &&
-                                    source_id== AES_ID &&
-                                    dest_id  == MEM_ID &&
-                                    core_finished) begin
-                                cState   <= TX_RES;
-                                byte_cnt <= 5'd0;
-                            end
+                                // Load key
+                                {MEM_ID, AES_ID, OP_LOAD_KEY, 1'b0, 1'bZ, 1'bZ}: begin
+                                    cState    <= RD_KEY;
+                                    byte_cnt  <= 5'd0;
+                                end
+                                // Load plaintext
+                                {MEM_ID, AES_ID, OP_LOAD_TEXT, 1'bZ, 1'b0, 1'bZ}: begin
+                                    cState    <= RD_TEXT;
+                                    byte_cnt  <= 5'd0;
+                                end
+                                // Write result (only after core_done)
+                                {AES_ID, MEM_ID, OP_WRITE_RESULT, 1'bZ, 1'bZ, 1'b1}: begin
+                                    cState   <= TX_RES;
+                                    byte_cnt <= 5'd0;
+                                end
+                                default: ;
+                            endcase
                         end
                     end
                 end
@@ -263,17 +259,19 @@ module aes (
                 // ACK_HOLD: wait for ack, then return to IDLE
                 // ----------------------------------------------------------
                 ACK_HOLD: begin
-                    if (ack_ready && !hash_latch) begin
-                        cState <= IDLE;
-                        key_loaded <= 1'b0;   // probably want to preserve key?
-                        text_loaded <= 1'b0;
-                        hdr_cnt <= 0;
-                        byte_cnt <= 0;
-                        core_finished <= 1'b0;
-                    end else if (ack_ready && hash_latch) begin
-                        cState <= IDLE;
-                        hdr_cnt <= 0;
-                        byte_cnt <= 0;
+                    if(ack_ready) begin
+                        if (!hash_latch) begin
+                            cState <= IDLE;
+                            key_loaded <= 1'b0;   // probably want to preserve key?
+                            text_loaded <= 1'b0;
+                            hdr_cnt <= 0;
+                            byte_cnt <= 0;
+                            core_finished <= 1'b0;
+                        end else if (hash_latch) begin
+                            cState <= IDLE;
+                            hdr_cnt <= 0;
+                            byte_cnt <= 0;
+                        end
                     end
                 end
 
